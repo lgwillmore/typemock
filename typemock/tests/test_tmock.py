@@ -19,10 +19,6 @@ class MyThing:
     def do_something_with_side_effects(self) -> None:
         pass
 
-    @classmethod
-    def __instancecheck__(cls, instance):
-        return True
-
 
 class TestBasicMethodMocking(TestCase):
 
