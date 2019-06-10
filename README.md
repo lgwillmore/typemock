@@ -54,6 +54,19 @@ verify(my_thing_mock).multiple_arg("p", 1)
 
 ```
 
+And when we try to specify behaviour that does not conform to the contract of the object we are mocking
+
+```python
+expected_result = "a string"
+
+with tmock(MyThing) as my_thing_mock:
+    when(my_thing_mock.multiple_arg(prefix="p", number="should be an int")).then_return(expected_result)
+```
+
+We get an informative error such as
+
+    typemock.safety.MockTypeSafetyError: Method: multiple_arg Arg: number must be of type:<class 'int'>
+
 ## Still to do
 
  - Mock attributes and properties.

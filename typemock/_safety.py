@@ -1,8 +1,10 @@
 import inspect
-from typing import List
+from typing import List, Type, TypeVar
 
 from typemock._utils import methods
 from typemock.api import MemberType, MissingHint, MissingTypeHintsError
+
+T = TypeVar('T')
 
 
 def _validate_method_annotations(clazz, missing: List[MissingHint]):
@@ -32,7 +34,7 @@ def _validate_method_annotations(clazz, missing: List[MissingHint]):
                 )
 
 
-def _validate_attributes(clazz, missing: List[MissingHint]):
+def _validate_attributes(clazz: Type[T], missing: List[MissingHint]):
     pass
 
 
@@ -43,7 +45,16 @@ def get_missing_class_type_hints(clazz) -> List[MissingHint]:
     return missing
 
 
-def validate_class_type_hints(clazz) -> List[MissingHint]:
+def validate_class_type_hints(clazz: Type[T]) -> None:
+    """
+    Args:
+        clazz:
+
+    Raises:
+
+        MissingTypeHintsError
+
+    """
     missing = get_missing_class_type_hints(clazz)
     if len(missing) > 0:
         raise MissingTypeHintsError(
