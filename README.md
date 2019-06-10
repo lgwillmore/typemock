@@ -1,4 +1,4 @@
-# type-mock
+# typemock
 
 Type safe mocking for python 3.
 

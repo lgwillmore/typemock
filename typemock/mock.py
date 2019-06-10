@@ -74,7 +74,13 @@ class MockMethodState(Generic[R]):
                     arg_type
                 ))
         return_type = func_annotations["return"]
-        if not isinstance(response, return_type):
+        if return_type is None:
+            if response is not None:
+                raise MockTypeSafetyError("Method: {} return must be of type:{}".format(
+                    self.name,
+                    return_type,
+                ))
+        elif not isinstance(response, return_type):
             raise MockTypeSafetyError("Method: {} return must be of type:{}".format(
                 self.name,
                 return_type,
