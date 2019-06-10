@@ -1,5 +1,7 @@
 # typemock
 
+[![Build Status](https://travis-ci.com/lgwillmore/typemock.svg?branch=master)](https://travis-ci.com/lgwillmore/typemock)
+
 Type safe mocking for python 3.
 
 1. [Motivation](#motivation)
