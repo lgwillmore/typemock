@@ -6,7 +6,7 @@ Type safe mocking for python 3.
 2. [Quick example usage](#quick-example-usage)
 3. [Still to do](#still-to-do)
 
-**NOTE: This library is still at the experimental stage. Its API and implementation could change drastically between versions. In fact, it does not quite do what it claims to do yet.**
+**NOTE: This library is still at the experimental stage. Its API and implementation could change drastically between versions. Currently, only simple object method mocking is possible**
 
 
 ## Motivation
@@ -22,7 +22,7 @@ But, in python, we now have type hints. And so, we can explicitly define the con
 
 ## Quick Example Usage
 
-Given a class such some class (the implementation of its method is not relevant)
+Given some class (the implementation of its method is not relevant)
 
 ```python
 class MyThing:
@@ -54,8 +54,9 @@ verify(my_thing_mock).multiple_arg("p", 1)
 
 ## Still to do
 
+ - Mock attributes and properties.
  - Enforce type hinted mocked objects by default, with option to disable
- - Check types at point of behaviour definition, and during mocked usage.
+ - Check/implement more complex type safety
  - More advanced argument matching
  - More verification options
 

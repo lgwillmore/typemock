@@ -1,8 +1,16 @@
-import types
+from types import FunctionType
+from typing import List
 
 
-def methods(cls):
-    return [(x, y) for x, y in cls.__dict__.items() if isinstance(y, types.FunctionType)]
+class FunctionEntry:
+
+    def __init__(self, name: str, func: FunctionType):
+        self.name = name
+        self.func = func
+
+
+def methods(cls) -> List[FunctionEntry]:
+    return [FunctionEntry(x, y) for x, y in cls.__dict__.items() if isinstance(y, FunctionType)]
 
 
 def bind(instance, func, as_name=None):
@@ -16,10 +24,3 @@ def bind(instance, func, as_name=None):
     bound_method = func.__get__(instance, instance.__class__)
     setattr(instance, as_name, bound_method)
     return bound_method
-
-
-def metaclass_resolver(*classes):
-    metaclass = tuple(set(type(cls) for cls in classes))
-    metaclass = metaclass[0] if len(metaclass) == 1 \
-        else type("_".join(mcls.__name__ for mcls in metaclass), metaclass, {})  # class M_C
-    return metaclass("_".join(cls.__name__ for cls in classes), classes, {})
