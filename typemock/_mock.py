@@ -3,8 +3,9 @@ from inspect import Signature
 from types import FunctionType
 from typing import TypeVar, Generic, Type, Callable, List, Tuple, Any, Dict
 
-from typemock.safety import validate_class_type_hints, MockTypeSafetyError
-from typemock.utils import methods, bind
+from typemock._safety import validate_class_type_hints
+from typemock._utils import methods, bind
+from typemock.api import MockTypeSafetyError, NoBehaviourSpecifiedError, ResponseBuilder
 
 T = TypeVar('T')
 R = TypeVar('R')
@@ -12,7 +13,7 @@ R = TypeVar('R')
 OrderedCallValues = Tuple[Tuple[str, Any], ...]
 
 
-class MockMethodState(Generic[R]):
+class _MockMethodState(Generic[R]):
 
     def __init__(self, name: str, signature: Signature, func: FunctionType):
         self.name = name
@@ -97,37 +98,26 @@ class MockMethodState(Generic[R]):
         return self._open
 
 
-class MockingResponseBuilder(Generic[T]):
-
-    def __init__(self, method_state: MockMethodState, *args, **kwargs):
-        self._method_state = method_state
-        self._args = args
-        self._kwargs = kwargs
-
-    def then_return(self, result: T):
-        self._method_state.set_response(result, *self._args, **self._kwargs)
-
-
-def _mock_method(state: MockMethodState) -> Callable:
+def _mock_method(state: _MockMethodState) -> Callable:
     def method_mock(*args, **kwargs):
         if state.is_open():
-            return MockingResponseBuilder(state, *args, **kwargs)
+            return _MockingResponseBuilder(state, *args, **kwargs)
         else:
             return state.response_for(*args, **kwargs)
 
     return method_mock
 
 
-class MockObject(Generic[T]):
+class _MockObject(Generic[T]):
 
     def __init__(self, mocked_class: Type[T]):
         validate_class_type_hints(mocked_class)
         self._mocked_class = mocked_class
-        self._mock_method_states: List[MockMethodState] = []
+        self._mock_method_states: List[_MockMethodState] = []
         self._open = False
         for func_entry in methods(mocked_class):
             sig = inspect.signature(func_entry.func)
-            method_state = MockMethodState(
+            method_state = _MockMethodState(
                 name=func_entry.name,
                 signature=sig,
                 func=func_entry.func
@@ -164,13 +154,50 @@ class MockObject(Generic[T]):
         return self._open
 
 
+class _MockingResponseBuilder(Generic[R], ResponseBuilder[R]):
+
+    def __init__(self, method_state: _MockMethodState, *args, **kwargs):
+        self._method_state = method_state
+        self._args = args
+        self._kwargs = kwargs
+
+    def then_return(self, result: R) -> None:
+        """
+        Sets the behaviour of the mock to return the given response.
+
+        Args:
+            result:
+
+        """
+        self._method_state.set_response(result, *self._args, **self._kwargs)
+
+
 def tmock(clazz: Type[T]) -> T:
-    return MockObject(clazz)
+    """
+    Mocks a given class.
+
+    This must be used as a context in order to define the mocked behaviour with `when`.
+
+    You must let the context close in order to use the mocked object as intended.
+
+    Examples:
+
+        with tmock(MyClass) as my_mock:
+            when(my_mock.do_something()).then_return("A Result")
+
+        result = my_mock.do_something()
+
+    Args:
+
+        clazz:
+
+    Returns:
+
+        mock:
+
+    """
+    return _MockObject(clazz)
 
 
-def when(mock_function_call_result: T) -> MockingResponseBuilder[T]:
+def when(mock_function_call_result: T) -> _MockingResponseBuilder[T]:
     return mock_function_call_result
-
-
-class NoBehaviourSpecifiedError(Exception):
-    pass

@@ -1,10 +1,10 @@
 from typing import Callable, Generic
 
-from typemock.mock import MockMethodState, T, MockObject
-from typemock.utils import bind
+from typemock._mock import _MockMethodState, T, _MockObject
+from typemock._utils import bind
 
 
-def _verify_method(method_state: MockMethodState, exactly: int = -1) -> Callable:
+def _verify_method(method_state: _MockMethodState, exactly: int = -1) -> Callable:
     def method_mock(*args, **kwargs):
         call_count = method_state.call_count_for(*args, **kwargs)
         if exactly == -1:
@@ -17,16 +17,16 @@ def _verify_method(method_state: MockMethodState, exactly: int = -1) -> Callable
     return method_mock
 
 
-class VerifyObject(Generic[T]):
+class _VerifyObject(Generic[T]):
 
-    def __init__(self, mock: MockObject[T]):
+    def __init__(self, mock: _MockObject[T]):
         for method_state in mock._mock_method_states:
             verify_method = _verify_method(method_state)
             bind(self, verify_method, method_state.name)
 
 
 def verify(mock: T) -> T:
-    return VerifyObject(mock)
+    return _VerifyObject(mock)
 
 
 class VerifyError(Exception):

@@ -1,9 +1,8 @@
 from unittest import TestCase
 
 from typemock import tmock, when, verify
-from typemock.mock import NoBehaviourSpecifiedError
-from typemock.safety import MockTypeSafetyError
-from typemock.verify import VerifyError
+from typemock._verify import VerifyError
+from typemock.api import NoBehaviourSpecifiedError, MockTypeSafetyError
 
 
 class MyThing:
@@ -116,14 +115,5 @@ class TestBasicMethodMocking(TestCase):
     # TODO: We can still mock a context object - idea: setup can only happen on_first - successive contexts revert.
 
 
-class TestMockObjectSafety(TestCase):
 
-    def test_try_to_specify_non_type_safe_argument_matching__simple_type(self):
-        with self.assertRaises(MockTypeSafetyError):
-            with tmock(MyThing) as my_thing_mock:
-                when(my_thing_mock.convert_int_to_str("not an int")).then_return("another string")
 
-    def test_try_to_specify_non_type_safe_return_type__simple_type(self):
-        with self.assertRaises(MockTypeSafetyError):
-            with tmock(MyThing) as my_thing_mock:
-                when(my_thing_mock.convert_int_to_str(1)).then_return(2)

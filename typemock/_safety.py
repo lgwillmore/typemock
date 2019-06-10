@@ -1,31 +1,8 @@
 import inspect
 from typing import List
 
-from typemock.utils import methods
-
-
-class MemberType:
-    ARG: str = "arg"
-    ATTRIBUTE: str = "attribute"
-    RETURN: str = "return"
-
-
-class MissingHint:
-
-    def __init__(self, path: List[str], member_type: str):
-        self.path = path
-        self.member_type = member_type
-
-    def __eq__(self, other):
-        if not isinstance(other, self.__class__):
-            return False
-        return self.member_type == other.member_type and self.path == other.path
-
-    def __repr__(self):
-        return "MissingHint(path={path}, member_type={member_type})".format(
-            path=self.path,
-            member_type=self.member_type
-        )
+from typemock._utils import methods
+from typemock.api import MemberType, MissingHint, MissingTypeHintsError
 
 
 def _validate_method_annotations(clazz, missing: List[MissingHint]):
@@ -73,11 +50,3 @@ def validate_class_type_hints(clazz) -> List[MissingHint]:
             "{} has missing type hints.".format(clazz),
             missing
         )
-
-
-class MissingTypeHintsError(Exception):
-    pass
-
-
-class MockTypeSafetyError(Exception):
-    pass
