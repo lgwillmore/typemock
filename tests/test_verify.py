@@ -56,11 +56,11 @@ class TestMockVerify(TestCase):
 
         my_thing_mock.convert_int_to_str(1)
 
-        verify(my_thing_mock).convert_int_to_str(match.any_thing())
+        verify(my_thing_mock).convert_int_to_str(match.anything())
 
     def test_verify__any_matcher__method_not_called(self):
         with tmock(MyThing) as my_thing_mock:
             when(my_thing_mock.convert_int_to_str(1)).then_return("something")
 
         with self.assertRaises(VerifyError):
-            verify(my_thing_mock).convert_int_to_str(match.any_thing())
+            verify(my_thing_mock).convert_int_to_str(match.anything())

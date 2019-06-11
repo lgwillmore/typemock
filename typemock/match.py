@@ -26,7 +26,7 @@ class MatchAny(Matcher):
 _MATCH_ANY = MatchAny()
 
 
-def any_thing() -> Matcher:
+def anything() -> Matcher:
     """
     Returns a matcher that will match anything. Type safety is still preserved by the mock itself.
     """

@@ -22,7 +22,7 @@ class MyThing:
 class TestMatcherAny(TestCase):
 
     def test_something_equal_to_any_thing(self):
-        matcher = match.any_thing()
+        matcher = match.anything()
 
         self.assertEqual(1, matcher)
 
@@ -32,7 +32,7 @@ class TestMockObjectMatching(TestCase):
     def test_specify_any_matcher_arg__called_with_correct_type__return_single(self):
         expected = "a string"
         with tmock(MyThing) as my_thing_mock:
-            when(my_thing_mock.convert_int_to_str(match.any_thing())).then_return(expected)
+            when(my_thing_mock.convert_int_to_str(match.anything())).then_return(expected)
 
         actual = my_thing_mock.convert_int_to_str(2)
 
@@ -41,7 +41,7 @@ class TestMockObjectMatching(TestCase):
     def test_specify_any_matcher_arg__called_with_correct_type__return_many(self):
         expected_many = ["a string"]
         with tmock(MyThing) as my_thing_mock:
-            when(my_thing_mock.convert_int_to_str(match.any_thing())).then_return_many(expected_many)
+            when(my_thing_mock.convert_int_to_str(match.anything())).then_return_many(expected_many)
 
         for expected in expected_many:
             actual = my_thing_mock.convert_int_to_str(2)
@@ -49,7 +49,7 @@ class TestMockObjectMatching(TestCase):
 
     def test_specify_any_matcher_arg__called_with_correct_type__raise_error(self):
         with tmock(MyThing) as my_thing_mock:
-            when(my_thing_mock.convert_int_to_str(match.any_thing())).then_raise(IOError)
+            when(my_thing_mock.convert_int_to_str(match.anything())).then_raise(IOError)
 
         with self.assertRaises(IOError):
             my_thing_mock.convert_int_to_str(2)
@@ -57,7 +57,7 @@ class TestMockObjectMatching(TestCase):
     def testwhen_we_have_matcher_based_behaviour_type_safety_is_enforced_on_call(self):
         expected = "a string"
         with tmock(MyThing) as my_thing_mock:
-            when(my_thing_mock.convert_int_to_str(match.any_thing())).then_return(expected)
+            when(my_thing_mock.convert_int_to_str(match.anything())).then_return(expected)
 
         with self.assertRaises(MockTypeSafetyError):
             my_thing_mock.convert_int_to_str("not an int")

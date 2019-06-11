@@ -8,7 +8,7 @@ Type safe mocking for python 3.
 2. [Quick example usage](#quick-example-usage)
 3. [Still to do](#still-to-do)
 
-**NOTE: This library is still at the experimental stage. Its API and implementation could change drastically between versions. Currently, only simple object method mocking is possible**
+**NOTE: This library is still in Alpha. Its API and implementation could change.**
 
 
 ## Motivation
