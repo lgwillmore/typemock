@@ -289,7 +289,7 @@ class _MockingResponseBuilder(Generic[R], ResponseBuilder[R]):
         self._method_state.set_response_many(results, loop, *self._args, **self._kwargs)
 
 
-def tmock(clazz: Type[T], type_safety: TypeSafety = TypeSafety.STRICT) -> T:
+def _tmock(clazz: Type[T], type_safety: TypeSafety = TypeSafety.STRICT) -> T:
     """
     Mocks a given class.
 
@@ -317,5 +317,5 @@ def tmock(clazz: Type[T], type_safety: TypeSafety = TypeSafety.STRICT) -> T:
     return _MockObject(clazz, type_safety)
 
 
-def when(mock_function_call_result: T) -> _MockingResponseBuilder[T]:
+def _when(mock_function_call_result: T) -> _MockingResponseBuilder[T]:
     return mock_function_call_result

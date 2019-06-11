@@ -26,5 +26,5 @@ class _VerifyObject(Generic[T]):
             bind(self, verify_method, method_state.name)
 
 
-def verify(mock: T, exactly: int = -1) -> T:
+def _verify(mock: T, exactly: int = -1) -> T:
     return _VerifyObject(mock, exactly=exactly)

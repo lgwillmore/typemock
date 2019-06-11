@@ -123,11 +123,11 @@ class TestTypeSafetyRelaxed(TestCase):
 
 class TestTypeSafetyNoResponseIsNone(TestCase):
 
-    def test_specify_return_to_be_None_when_missing(self):
+    def test_specify_return_to_be_Nonewhen_missing(self):
         with tmock(ClassWithNoResponseType, type_safety=TypeSafety.NO_RETURN_IS_NONE_RETURN) as my_mock:
             when(my_mock.method_with_missing_return_type()).then_return(None)
 
-    def test_specify_return_to_be_something_else_when_missing(self):
+    def test_specify_return_to_be_something_elsewhen_missing(self):
         with self.assertRaises(MockTypeSafetyError):
             with tmock(ClassWithNoResponseType, type_safety=TypeSafety.NO_RETURN_IS_NONE_RETURN) as my_mock:
                 when(my_mock.method_with_missing_return_type()).then_return("Something")
