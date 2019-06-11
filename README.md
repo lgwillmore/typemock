@@ -85,8 +85,8 @@ Things to note:
 
  - Mock attributes and properties.
  - Check/implement more complex type safety (nested objects)
- - More advanced argument matching (types, any)
  - More behaviour specifications (Programmatic responses)
+ - Better docs and examples
 
 
 

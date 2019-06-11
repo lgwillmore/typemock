@@ -27,4 +27,7 @@ _MATCH_ANY = MatchAny()
 
 
 def any_thing() -> Matcher:
+    """
+    Returns a matcher that will match anything. Type safety is still preserved by the mock itself.
+    """
     return _MATCH_ANY
