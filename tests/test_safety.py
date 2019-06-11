@@ -6,6 +6,14 @@ from typemock.api import MemberType, MissingHint, MissingTypeHintsError, MockTyp
 
 class ClassWithMultipleUnHintedThings:
 
+    def __init__(self):
+        # We do not care about type hints for magic methods
+        pass
+
+    def _some_private_function(self):
+        # We do not care about type hints for private methods
+        pass
+
     def good_method_with_args_and_return(self, number: int) -> str:
         pass
 
