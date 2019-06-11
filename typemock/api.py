@@ -27,6 +27,23 @@ class ResponseBuilder(ABC, Generic[R]):
 
         """
 
+    @abstractmethod
+    def then_return_many(self, results: List[R], loop: bool = False) -> None:
+        """
+        Sets the behaviour of the mock to iterate through a series of results on each successive call.
+
+        Args:
+            results:
+
+                The results to return with each successive call.
+
+            loop:
+
+                If False, an error will be raised when responses are exhausted. If True, responses will start from
+                first response again.
+
+        """
+
 
 class MemberType:
     ARG: str = "arg"

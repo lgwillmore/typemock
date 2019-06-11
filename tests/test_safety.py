@@ -58,4 +58,9 @@ class TestSafety(TestCase):
             with tmock(MyThing) as my_thing_mock:
                 when(my_thing_mock.convert_int_to_str(1)).then_return(2)
 
+    def test_try_to_specify_non_type_safe_return_type__simple_type__return_many(self):
+        with self.assertRaises(MockTypeSafetyError):
+            with tmock(MyThing) as my_thing_mock:
+                when(my_thing_mock.convert_int_to_str(1)).then_return_many(["okay", 1])
+
     # TODO: Attribute and Property type safety. Recursive type safety for nested objects (only their attributes and properties).

@@ -104,7 +104,7 @@ class TestBasicMethodMocking(TestCase):
 
         verify(my_thing_mock).do_something_with_side_effects()
 
-    def test_mock_object__mock_error_response(self):
+    def test_mock_object__then_raise(self):
         expected_error = IOError()
 
         with tmock(MyThing) as my_thing_mock:
@@ -113,4 +113,35 @@ class TestBasicMethodMocking(TestCase):
         with self.assertRaises(IOError):
             my_thing_mock.do_something_with_side_effects()
 
-    # TODO: We can still mock a context object - idea: setup can only happen on_first - successive contexts revert.
+    def test_mock_object__then_return_many__loop_false(self):
+        expected_responses = [
+            "first response",
+            "second response"
+        ]
+
+        with tmock(MyThing) as my_thing_mock:
+            when(my_thing_mock.return_a_str()).then_return_many(expected_responses, False)
+
+        for expected in expected_responses:
+            actual = my_thing_mock.return_a_str()
+            self.assertEqual(expected, actual)
+
+        # Not looping, and responses have run out.
+        with self.assertRaises(NoBehaviourSpecifiedError):
+            my_thing_mock.return_a_str()
+
+    def test_mock_object__then_return_many__loop_true(self):
+        expected_responses = [
+            "first response",
+            "second response"
+        ]
+
+        with tmock(MyThing) as my_thing_mock:
+            when(my_thing_mock.return_a_str()).then_return_many(expected_responses, True)
+
+        for i in range(2):
+            for expected in expected_responses:
+                actual = my_thing_mock.return_a_str()
+                self.assertEqual(expected, actual)
+
+# TODO: We can still mock a context object - idea: setup can only happen on_first - successive contexts revert.

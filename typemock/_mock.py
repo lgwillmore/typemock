@@ -42,6 +42,24 @@ class ResponderRaise(Responder[Type[Exception]]):
         raise self._error
 
 
+class ResponderMany(Generic[R], Responder[R]):
+
+    def __init__(self, responses: List[R], loop: bool):
+        self._responses = responses
+        self._loop = loop
+        self._index = 0
+
+    def response(self, *args, **kwargs) -> R:
+        if self._index > len(self._responses) - 1:
+            if self._loop:
+                self._index = 0
+            else:
+                raise NoBehaviourSpecifiedError("No more responses. Do you want to loop through many responses?")
+        response = self._responses[self._index]
+        self._index += 1
+        return response
+
+
 class _MockMethodState(Generic[R]):
 
     def __init__(self, name: str, signature: Signature, func: FunctionType):
@@ -107,6 +125,27 @@ class _MockMethodState(Generic[R]):
                 return_type,
             ))
         self._responses[key] = ResponderBasic(response)
+
+    def set_response_many(self, results: List[R], loop: bool, *args, **kwargs):
+        key = self._key(*args, **kwargs)
+        self._check_key_type_safety(key)
+        func_annotations = self._func.__annotations__
+        return_type = func_annotations["return"]
+        if return_type is None:
+            for response in results:
+                if response is not None:
+                    raise MockTypeSafetyError("Method: {} return must be of type:{}".format(
+                        self.name,
+                        return_type,
+                    ))
+        else:
+            for response in results:
+                if not isinstance(response, return_type):
+                    raise MockTypeSafetyError("Method: {} return must be of type:{}".format(
+                        self.name,
+                        return_type,
+                    ))
+        self._responses[key] = ResponderMany(results, loop)
 
     def set_error_response(self, error: Type[Exception], *args, **kwargs):
         key = self._key(*args, **kwargs)
@@ -204,6 +243,9 @@ class _MockingResponseBuilder(Generic[R], ResponseBuilder[R]):
 
     def then_raise(self, error: Type[Exception]) -> None:
         self._method_state.set_error_response(error, *self._args, **self._kwargs)
+
+    def then_return_many(self, results: List[R], loop: bool = False) -> None:
+        self._method_state.set_response_many(results, loop, *self._args, **self._kwargs)
 
 
 def tmock(clazz: Type[T]) -> T:
