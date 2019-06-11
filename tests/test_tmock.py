@@ -104,7 +104,7 @@ class TestBasicMethodMocking(TestCase):
 
         verify(my_thing_mock).do_something_with_side_effects()
 
-    def test_mock_objct__mock_error_response(self):
+    def test_mock_object__mock_error_response(self):
         expected_error = IOError()
 
         with tmock(MyThing) as my_thing_mock:
