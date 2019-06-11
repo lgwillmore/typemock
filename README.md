@@ -33,8 +33,8 @@ class MyThing:
         pass
 ```
 
-### Mock and verify         
-            
+### Mock and verify
+
 We con mock behaviour and verify interactions as follows:
 
 ```python
