@@ -1,6 +1,6 @@
 # typemock
 
-[![Build Status](https://travis-ci.com/lgwillmore/typemock.svg?branch=master)](https://travis-ci.com/lgwillmore/typemock)
+[![Build Status](https://travis-ci.com/lgwillmore/typemock.svg?branch=master)](https://travis-ci.com/lgwillmore/typemock) [![Documentation Status](https://readthedocs.org/projects/typemock/badge/?version=latest)](https://typemock.readthedocs.io/en/latest/?badge=latest)
 
 Type safe mocking for python 3.
 
