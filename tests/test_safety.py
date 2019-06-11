@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from typemock import tmock, when
+from typemock import tmock, when, match
 from typemock.api import MemberType, MissingHint, MissingTypeHintsError, MockTypeSafetyError, TypeSafety
 
 
@@ -106,6 +106,9 @@ class TestSafety(TestCase):
         with self.assertRaises(MockTypeSafetyError):
             with tmock(MyThing, type_safety=type_safety) as my_thing_mock:
                 when(my_thing_mock.convert_int_to_str(1)).then_return_many(["okay", 1])
+
+
+
 
     # TODO: Attribute and Property type safety. Recursive type safety for nested objects (only their attributes and properties).
 

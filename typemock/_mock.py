@@ -7,11 +7,19 @@ from typing import TypeVar, Generic, Type, Callable, List, Tuple, Any, Dict
 from typemock._safety import validate_class_type_hints
 from typemock._utils import methods, bind
 from typemock.api import MockTypeSafetyError, NoBehaviourSpecifiedError, ResponseBuilder, TypeSafety
+from typemock.match import Matcher
 
 T = TypeVar('T')
 R = TypeVar('R')
 
 OrderedCallValues = Tuple[Tuple[str, Any], ...]
+
+
+def _has_matchers(call: OrderedCallValues) -> bool:
+    for call_param in call:
+        if isinstance(call_param[1], Matcher):
+            return True
+    return False
 
 
 class Responder(ABC, Generic[R]):
@@ -74,6 +82,7 @@ class _MockMethodState(Generic[R]):
         self._signature = signature
         self._type_safety = type_safety
         self._responses: Dict[OrderedCallValues, Responder[R]] = {}
+        self._matcher_responses: Dict[OrderedCallValues, Responder[R]] = {}
         self._open = False
         self._arg_index_to_arg_name = {}
         self._arg_name_to_parameter = {}
@@ -107,8 +116,11 @@ class _MockMethodState(Generic[R]):
         key = self._key(*args, **kwargs)
         self._call_record.append(key)
         if key in self._responses:
-            return self._responses[key].response(*args, *kwargs)
+            return self._responses[key].response(*args, **kwargs)
         else:
+            for matcher_key, responder in self._matcher_responses.items():
+                if matcher_key == key:
+                    return responder.response(*args, **kwargs)
             raise NoBehaviourSpecifiedError()
 
     def call_count_for(self, *args, **kwargs) -> int:
@@ -153,19 +165,28 @@ class _MockMethodState(Generic[R]):
         key = self._key(*args, **kwargs)
         self._check_key_type_safety(key)
         self._validate_return(response)
-        self._responses[key] = ResponderBasic(response)
+        if _has_matchers(key):
+            self._matcher_responses[key] = ResponderBasic(response)
+        else:
+            self._responses[key] = ResponderBasic(response)
 
     def set_response_many(self, results: List[R], loop: bool, *args, **kwargs):
         key = self._key(*args, **kwargs)
         self._check_key_type_safety(key)
         for response in results:
             self._validate_return(response)
-        self._responses[key] = ResponderMany(results, loop)
+        if _has_matchers(key):
+            self._matcher_responses[key] = ResponderMany(results, loop)
+        else:
+            self._responses[key] = ResponderMany(results, loop)
 
     def set_error_response(self, error: Type[Exception], *args, **kwargs):
         key = self._key(*args, **kwargs)
         self._check_key_type_safety(key)
-        self._responses[key] = ResponderRaise(error)
+        if _has_matchers(key):
+            self._matcher_responses[key] = ResponderRaise(error)
+        else:
+            self._responses[key] = ResponderRaise(error)
 
     def open_for_setup(self):
         self._open = True
@@ -181,6 +202,8 @@ class _MockMethodState(Generic[R]):
         for call_arg in key:
             arg_name = call_arg[0]
             arg_value = call_arg[1]
+            if isinstance(arg_value, Matcher):
+                continue
             if arg_name in func_annotations:
                 arg_type = func_annotations[arg_name]
                 if not isinstance(arg_value, arg_type):

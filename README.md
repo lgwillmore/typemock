@@ -87,7 +87,6 @@ Things to note:
  - Check/implement more complex type safety (nested objects)
  - More advanced argument matching (types, any)
  - More behaviour specifications (Programmatic responses)
- - More verification options (amount of calls, no calls)
 
 
 
