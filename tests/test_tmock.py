@@ -18,6 +18,9 @@ class MyThing:
     def do_something_with_side_effects(self) -> None:
         pass
 
+    def method_with_default_args(self, first_number: int, second_string: str = "default") -> None:
+        pass
+
 
 class TestBasicMethodMocking(TestCase):
 
@@ -95,6 +98,14 @@ class TestBasicMethodMocking(TestCase):
 
         self.assertEqual(expected_result, actual)
         verify(my_thing_mock).multiple_arg("p", 1)
+
+    def test_mock_object__can_mock_method__default_args(self):
+        with tmock(MyThing) as my_thing_mock:
+            when(my_thing_mock.method_with_default_args(first_number=1)).then_return(None)
+
+        my_thing_mock.method_with_default_args(1)
+
+        verify(my_thing_mock).method_with_default_args(1)
 
     def test_mock_object__can_mock_method__no_args__no_return(self):
         with tmock(MyThing) as my_thing_mock:

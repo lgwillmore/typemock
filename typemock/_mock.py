@@ -95,7 +95,11 @@ class _MockMethodState(Generic[R]):
         for name, param in self._signature.parameters.items():
             if name == "self":
                 continue
-            ordered_key_values.append((name, args_dict[name]))
+            value = args_dict.get(
+                name,
+                self._arg_name_to_parameter[name].default
+            )
+            ordered_key_values.append((name, value))
         key = tuple(ordered_key_values)
         return key
 
