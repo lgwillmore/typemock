@@ -1,6 +1,7 @@
 from unittest import TestCase
 
 from typemock import match, tmock, when
+from typemock.api import MockTypeSafetyError
 
 
 class MyThing:
@@ -52,3 +53,11 @@ class TestMockObjectMatching(TestCase):
 
         with self.assertRaises(IOError):
             my_thing_mock.convert_int_to_str(2)
+
+    def test_when_we_have_matcher_based_behaviour_type_safety_is_enforced_on_call(self):
+        expected = "a string"
+        with tmock(MyThing) as my_thing_mock:
+            when(my_thing_mock.convert_int_to_str(match.any_thing())).then_return(expected)
+
+        with self.assertRaises(MockTypeSafetyError):
+            my_thing_mock.convert_int_to_str("not an int")

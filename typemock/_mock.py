@@ -120,6 +120,7 @@ class _MockMethodState(Generic[R]):
         else:
             for matcher_key, responder in self._matcher_responses.items():
                 if matcher_key == key:
+                    self._check_key_type_safety(key)
                     return responder.response(*args, **kwargs)
             raise NoBehaviourSpecifiedError()
 
