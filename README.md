@@ -32,9 +32,10 @@ class MyThing:
     def multiple_arg(self, prefix: str, number: int) -> str:
         pass
 ```
+
+### Mock and verify         
             
-            
-We con mock behaviour and verify interactions:
+We con mock behaviour and verify interactions as follows:
 
 ```python
 from typemock import tmock, when, verify
@@ -54,6 +55,13 @@ verify(my_thing_mock).multiple_arg("p", 1)
 
 ```
 
+Things to note:
+
+ - The mocked object must be used as a context manager in order to specify behaviour.
+ - You must let the context close in order to use the defined behaviour.
+ 
+### Type safety
+
 And when we try to specify behaviour that does not conform to the contract of the object we are mocking
 
 ```python
@@ -67,13 +75,19 @@ We get an informative error such as
 
     typemock.safety.MockTypeSafetyError: Method: multiple_arg Arg: number must be of type:<class 'int'>
 
+Things to note:
+
+ - You can only mock objects which have fully type hinted interfaces. You will get Type hint errors otherwise.
+ - You will also get type hint errors if you attempt to specify behaviour that returns the incorrect type.
+
+
 ## Still to do
 
  - Mock attributes and properties.
- - Enforce type hinted mocked objects by default, with option to disable
- - Check/implement more complex type safety
- - More advanced argument matching
- - More verification options
+ - Check/implement more complex type safety (nested objects)
+ - More advanced argument matching (types, any)
+ - More behaviour specifications (Programmatic responses, many responses, raise exception)
+ - More verification options (amount of calls, no calls)
 
 
 
