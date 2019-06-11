@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from enum import Enum
 from typing import TypeVar, List, Generic, Type
 
 T = TypeVar('T')
@@ -43,6 +44,12 @@ class ResponseBuilder(ABC, Generic[R]):
                 first response again.
 
         """
+
+
+class TypeSafety(Enum):
+    STRICT = 1  # Everything must be type hinted
+    NO_RETURN_IS_NONE_RETURN = 2  # Everything type hinted, but no returns are interpreted as None returns
+    RELAXED = 3  # Enforce type safety where there are type hints.
 
 
 class MemberType:

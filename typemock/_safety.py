@@ -2,12 +2,12 @@ import inspect
 from typing import List, Type, TypeVar
 
 from typemock._utils import methods
-from typemock.api import MemberType, MissingHint, MissingTypeHintsError
+from typemock.api import MemberType, MissingHint, MissingTypeHintsError, TypeSafety
 
 T = TypeVar('T')
 
 
-def _validate_method_annotations(clazz, missing: List[MissingHint]):
+def _validate_method_annotations(clazz: Type[T], type_safety: TypeSafety, missing: List[MissingHint]):
     for func_entry in methods(clazz):
         func = func_entry.func
         name = func_entry.name
@@ -25,7 +25,8 @@ def _validate_method_annotations(clazz, missing: List[MissingHint]):
                                 member_type=MemberType.ARG
                             )
                         )
-            if "return" not in annotations:
+
+            if type_safety != TypeSafety.NO_RETURN_IS_NONE_RETURN and "return" not in annotations:
                 missing.append(
                     MissingHint(
                         path=[name],
@@ -34,28 +35,31 @@ def _validate_method_annotations(clazz, missing: List[MissingHint]):
                 )
 
 
-def _validate_attributes(clazz: Type[T], missing: List[MissingHint]):
+def _validate_attributes(clazz: Type[T], type_safety: TypeSafety, missing: List[MissingHint]):
     pass
 
 
-def get_missing_class_type_hints(clazz) -> List[MissingHint]:
+def get_missing_class_type_hints(clazz: Type[T], type_safety: TypeSafety) -> List[MissingHint]:
     missing = []
-    _validate_attributes(clazz, missing)
-    _validate_method_annotations(clazz, missing)
+    _validate_attributes(clazz, type_safety, missing)
+    _validate_method_annotations(clazz, type_safety, missing)
     return missing
 
 
-def validate_class_type_hints(clazz: Type[T]) -> None:
+def validate_class_type_hints(clazz: Type[T], type_safety: TypeSafety) -> None:
     """
     Args:
         clazz:
+        type_safety:
 
     Raises:
 
         MissingTypeHintsError
 
     """
-    missing = get_missing_class_type_hints(clazz)
+    if type_safety == TypeSafety.RELAXED:
+        return
+    missing = get_missing_class_type_hints(clazz, type_safety)
     if len(missing) > 0:
         raise MissingTypeHintsError(
             "{} has missing type hints.".format(clazz),

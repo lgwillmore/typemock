@@ -6,7 +6,7 @@ from typing import TypeVar, Generic, Type, Callable, List, Tuple, Any, Dict
 
 from typemock._safety import validate_class_type_hints
 from typemock._utils import methods, bind
-from typemock.api import MockTypeSafetyError, NoBehaviourSpecifiedError, ResponseBuilder
+from typemock.api import MockTypeSafetyError, NoBehaviourSpecifiedError, ResponseBuilder, TypeSafety
 
 T = TypeVar('T')
 R = TypeVar('R')
@@ -62,10 +62,17 @@ class ResponderMany(Generic[R], Responder[R]):
 
 class _MockMethodState(Generic[R]):
 
-    def __init__(self, name: str, signature: Signature, func: FunctionType):
+    def __init__(
+            self,
+            name: str,
+            signature: Signature,
+            func: FunctionType,
+            type_safety: TypeSafety
+    ):
         self.name = name
         self._func = func
         self._signature = signature
+        self._type_safety = type_safety
         self._responses: Dict[OrderedCallValues, Responder[R]] = {}
         self._open = False
         self._arg_index_to_arg_name = {}
@@ -108,43 +115,47 @@ class _MockMethodState(Generic[R]):
                 count += 1
         return count
 
-    def set_response(self, response: R, *args, **kwargs):
-        key = self._key(*args, **kwargs)
-        self._check_key_type_safety(key)
+    def _validate_return(self, response: R):
         func_annotations = self._func.__annotations__
-        return_type = func_annotations["return"]
-        if return_type is None:
-            if response is not None:
-                raise MockTypeSafetyError("Method: {} return must be of type:{}".format(
-                    self.name,
-                    return_type,
-                ))
-        elif not isinstance(response, return_type):
-            raise MockTypeSafetyError("Method: {} return must be of type:{}".format(
-                self.name,
-                return_type,
-            ))
-        self._responses[key] = ResponderBasic(response)
-
-    def set_response_many(self, results: List[R], loop: bool, *args, **kwargs):
-        key = self._key(*args, **kwargs)
-        self._check_key_type_safety(key)
-        func_annotations = self._func.__annotations__
-        return_type = func_annotations["return"]
-        if return_type is None:
-            for response in results:
+        if self._type_safety == TypeSafety.NO_RETURN_IS_NONE_RETURN:
+            return_type = func_annotations.get("return")
+            if return_type is None:
                 if response is not None:
                     raise MockTypeSafetyError("Method: {} return must be of type:{}".format(
                         self.name,
                         return_type,
                     ))
+            elif not isinstance(response, return_type):
+                raise MockTypeSafetyError("Method: {} return must be of type:{}".format(
+                    self.name,
+                    return_type,
+                ))
         else:
-            for response in results:
-                if not isinstance(response, return_type):
+            if "return" in func_annotations:
+                return_type = func_annotations["return"]
+                if return_type is None:
+                    if response is not None:
+                        raise MockTypeSafetyError("Method: {} return must be of type:{}".format(
+                            self.name,
+                            return_type,
+                        ))
+                elif not isinstance(response, return_type):
                     raise MockTypeSafetyError("Method: {} return must be of type:{}".format(
                         self.name,
                         return_type,
                     ))
+
+    def set_response(self, response: R, *args, **kwargs):
+        key = self._key(*args, **kwargs)
+        self._check_key_type_safety(key)
+        self._validate_return(response)
+        self._responses[key] = ResponderBasic(response)
+
+    def set_response_many(self, results: List[R], loop: bool, *args, **kwargs):
+        key = self._key(*args, **kwargs)
+        self._check_key_type_safety(key)
+        for response in results:
+            self._validate_return(response)
         self._responses[key] = ResponderMany(results, loop)
 
     def set_error_response(self, error: Type[Exception], *args, **kwargs):
@@ -166,13 +177,14 @@ class _MockMethodState(Generic[R]):
         for call_arg in key:
             arg_name = call_arg[0]
             arg_value = call_arg[1]
-            arg_type = func_annotations[arg_name]
-            if not isinstance(arg_value, arg_type):
-                raise MockTypeSafetyError("Method: {} Arg: {} must be of type:{}".format(
-                    self.name,
-                    arg_name,
-                    arg_type
-                ))
+            if arg_name in func_annotations:
+                arg_type = func_annotations[arg_name]
+                if not isinstance(arg_value, arg_type):
+                    raise MockTypeSafetyError("Method: {} Arg: {} must be of type:{}".format(
+                        self.name,
+                        arg_name,
+                        arg_type
+                    ))
 
 
 def _mock_method(state: _MockMethodState) -> Callable:
@@ -187,8 +199,8 @@ def _mock_method(state: _MockMethodState) -> Callable:
 
 class _MockObject(Generic[T]):
 
-    def __init__(self, mocked_class: Type[T]):
-        validate_class_type_hints(mocked_class)
+    def __init__(self, mocked_class: Type[T], type_safety: TypeSafety):
+        validate_class_type_hints(mocked_class, type_safety)
         self._mocked_class = mocked_class
         self._mock_method_states: List[_MockMethodState] = []
         self._open = False
@@ -197,7 +209,8 @@ class _MockObject(Generic[T]):
             method_state = _MockMethodState(
                 name=func_entry.name,
                 signature=sig,
-                func=func_entry.func
+                func=func_entry.func,
+                type_safety=type_safety
             )
             self._mock_method_states.append(method_state)
             mock_method = _mock_method(method_state)
@@ -248,7 +261,7 @@ class _MockingResponseBuilder(Generic[R], ResponseBuilder[R]):
         self._method_state.set_response_many(results, loop, *self._args, **self._kwargs)
 
 
-def tmock(clazz: Type[T]) -> T:
+def tmock(clazz: Type[T], type_safety: TypeSafety = TypeSafety.STRICT) -> T:
     """
     Mocks a given class.
 
@@ -265,6 +278,7 @@ def tmock(clazz: Type[T]) -> T:
 
     Args:
 
+        type_safety:
         clazz:
 
     Returns:
@@ -272,7 +286,7 @@ def tmock(clazz: Type[T]) -> T:
         mock:
 
     """
-    return _MockObject(clazz)
+    return _MockObject(clazz, type_safety)
 
 
 def when(mock_function_call_result: T) -> _MockingResponseBuilder[T]:
