@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import TypeVar, List, Generic
+from typing import TypeVar, List, Generic, Type
 
 T = TypeVar('T')
 R = TypeVar('R')
@@ -14,6 +14,16 @@ class ResponseBuilder(ABC, Generic[R]):
 
         Args:
             result:
+
+        """
+
+    @abstractmethod
+    def then_raise(self, error: Type[Exception]) -> None:
+        """
+        Sets the behaviour of the mock to raise the given Exception.
+
+        Args:
+            error:
 
         """
 
@@ -51,4 +61,8 @@ class MockTypeSafetyError(Exception):
 
 
 class NoBehaviourSpecifiedError(Exception):
+    pass
+
+
+class VerifyError(Exception):
     pass

@@ -1,4 +1,5 @@
 import inspect
+from abc import ABC, abstractmethod
 from inspect import Signature
 from types import FunctionType
 from typing import TypeVar, Generic, Type, Callable, List, Tuple, Any, Dict
@@ -13,13 +14,41 @@ R = TypeVar('R')
 OrderedCallValues = Tuple[Tuple[str, Any], ...]
 
 
+class Responder(ABC, Generic[R]):
+    """
+    Base Responder for a method call. Allows for implementation of different logic to get the response.
+    """
+
+    @abstractmethod
+    def response(self, *args, **kwargs) -> R:
+        pass
+
+
+class ResponderBasic(Generic[R], Responder[R]):
+
+    def __init__(self, response: R):
+        self._response = response
+
+    def response(self, *args, **kwargs) -> R:
+        return self._response
+
+
+class ResponderRaise(Responder[Type[Exception]]):
+
+    def __init__(self, error: Type[Exception]):
+        self._error = error
+
+    def response(self, *args, **kwargs) -> R:
+        raise self._error
+
+
 class _MockMethodState(Generic[R]):
 
     def __init__(self, name: str, signature: Signature, func: FunctionType):
         self.name = name
         self._func = func
         self._signature = signature
-        self._responses: Dict[OrderedCallValues, R] = {}
+        self._responses: Dict[OrderedCallValues, Responder[R]] = {}
         self._open = False
         self._arg_index_to_arg_name = {}
         self._arg_name_to_parameter = {}
@@ -49,7 +78,7 @@ class _MockMethodState(Generic[R]):
         key = self._key(*args, **kwargs)
         self._call_record.append(key)
         if key in self._responses:
-            return self._responses[key]
+            return self._responses[key].response(*args, *kwargs)
         else:
             raise NoBehaviourSpecifiedError()
 
@@ -63,17 +92,8 @@ class _MockMethodState(Generic[R]):
 
     def set_response(self, response: R, *args, **kwargs):
         key = self._key(*args, **kwargs)
+        self._check_key_type_safety(key)
         func_annotations = self._func.__annotations__
-        for call_arg in key:
-            arg_name = call_arg[0]
-            arg_value = call_arg[1]
-            arg_type = func_annotations[arg_name]
-            if not isinstance(arg_value, arg_type):
-                raise MockTypeSafetyError("Method: {} Arg: {} must be of type:{}".format(
-                    self.name,
-                    arg_name,
-                    arg_type
-                ))
         return_type = func_annotations["return"]
         if return_type is None:
             if response is not None:
@@ -86,7 +106,12 @@ class _MockMethodState(Generic[R]):
                 self.name,
                 return_type,
             ))
-        self._responses[key] = response
+        self._responses[key] = ResponderBasic(response)
+
+    def set_error_response(self, error: Type[Exception], *args, **kwargs):
+        key = self._key(*args, **kwargs)
+        self._check_key_type_safety(key)
+        self._responses[key] = ResponderRaise(error)
 
     def open_for_setup(self):
         self._open = True
@@ -96,6 +121,19 @@ class _MockMethodState(Generic[R]):
 
     def is_open(self) -> bool:
         return self._open
+
+    def _check_key_type_safety(self, key: OrderedCallValues):
+        func_annotations = self._func.__annotations__
+        for call_arg in key:
+            arg_name = call_arg[0]
+            arg_value = call_arg[1]
+            arg_type = func_annotations[arg_name]
+            if not isinstance(arg_value, arg_type):
+                raise MockTypeSafetyError("Method: {} Arg: {} must be of type:{}".format(
+                    self.name,
+                    arg_name,
+                    arg_type
+                ))
 
 
 def _mock_method(state: _MockMethodState) -> Callable:
@@ -162,14 +200,10 @@ class _MockingResponseBuilder(Generic[R], ResponseBuilder[R]):
         self._kwargs = kwargs
 
     def then_return(self, result: R) -> None:
-        """
-        Sets the behaviour of the mock to return the given response.
-
-        Args:
-            result:
-
-        """
         self._method_state.set_response(result, *self._args, **self._kwargs)
+
+    def then_raise(self, error: Type[Exception]) -> None:
+        self._method_state.set_error_response(error, *self._args, **self._kwargs)
 
 
 def tmock(clazz: Type[T]) -> T:

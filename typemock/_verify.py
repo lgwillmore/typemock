@@ -2,6 +2,7 @@ from typing import Callable, Generic
 
 from typemock._mock import _MockMethodState, T, _MockObject
 from typemock._utils import bind
+from typemock.api import VerifyError
 
 
 def _verify_method(method_state: _MockMethodState, exactly: int = -1) -> Callable:
@@ -27,7 +28,3 @@ class _VerifyObject(Generic[T]):
 
 def verify(mock: T) -> T:
     return _VerifyObject(mock)
-
-
-class VerifyError(Exception):
-    pass

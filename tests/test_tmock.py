@@ -1,8 +1,7 @@
 from unittest import TestCase
 
 from typemock import tmock, when, verify
-from typemock._verify import VerifyError
-from typemock.api import NoBehaviourSpecifiedError, MockTypeSafetyError
+from typemock.api import NoBehaviourSpecifiedError
 
 
 class MyThing:
@@ -105,15 +104,13 @@ class TestBasicMethodMocking(TestCase):
 
         verify(my_thing_mock).do_something_with_side_effects()
 
-    def test_mock_object__mocked_method_not_called__verify_error(self):
-        with tmock(MyThing) as my_thing_mock:
-            when(my_thing_mock.do_something_with_side_effects()).then_return(None)
+    def test_mock_objct__mock_error_response(self):
+        expected_error = IOError()
 
-        with self.assertRaises(VerifyError):
-            verify(my_thing_mock).do_something_with_side_effects()
+        with tmock(MyThing) as my_thing_mock:
+            when(my_thing_mock.do_something_with_side_effects()).then_raise(expected_error)
+
+        with self.assertRaises(IOError):
+            my_thing_mock.do_something_with_side_effects()
 
     # TODO: We can still mock a context object - idea: setup can only happen on_first - successive contexts revert.
-
-
-
-
