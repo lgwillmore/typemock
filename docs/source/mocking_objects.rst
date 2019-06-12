@@ -2,7 +2,6 @@ Mocking an Object
 =================
 
 The `DSL` for defining and using **typemock** takes much of its inspiration from the mocking libraries of statically typed languages.
-This may change... but it we think it provides a clear way of expressing what it is we are mocking.
 
 First, let us define a class that we wish to mock.
 
