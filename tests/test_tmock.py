@@ -155,4 +155,12 @@ class TestBasicMethodMocking(TestCase):
                 actual = my_thing_mock.return_a_str()
                 self.assertEqual(expected, actual)
 
+    def test_mock_object__can_mock_async_method(self):
+        expected_result = "a string"
+
+        with tmock(MyThing) as my_thing_mock:
+            when(my_thing_mock.do_something_asynchronously()).then_return(expected_result)
+
+        verify(my_thing_mock, exactly=0).return_a_str()
+
 # TODO: We can still mock a context object - idea: setup can only happen on_first - successive contexts revert.

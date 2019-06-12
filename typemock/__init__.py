@@ -1,5 +1,15 @@
+from typing import TypeVar, Callable
+
 from typemock._mock import (
-    _tmock as tmock,
-    _when as when
+    _tmock,
+    _when
 )
-from typemock._verify import _verify as verify
+from typemock._verify import _verify
+from typemock.api import TypeSafety
+
+T = TypeVar('T')
+R = TypeVar('R')
+
+tmock: Callable[[T, TypeSafety], T] = _tmock
+when = _when
+verify: Callable[[T], T] = _verify

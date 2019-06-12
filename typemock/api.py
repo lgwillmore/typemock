@@ -19,7 +19,7 @@ class ResponseBuilder(ABC, Generic[R]):
         """
 
     @abstractmethod
-    def then_raise(self, error: Type[Exception]) -> None:
+    def then_raise(self, error: Exception) -> None:
         """
         Sets the behaviour of the mock to raise the given Exception.
 

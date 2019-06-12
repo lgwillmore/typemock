@@ -216,13 +216,22 @@ class _MockMethodState(Generic[R]):
 
 
 def _mock_method(state: _MockMethodState) -> Callable:
-    def method_mock(*args, **kwargs):
-        if state.is_open():
-            return _MockingResponseBuilder(state, *args, **kwargs)
-        else:
-            return state.response_for(*args, **kwargs)
+    if inspect.iscoroutinefunction(state._func):
+        async def method_mock(*args, **kwargs):
+            if state.is_open():
+                return _MockingResponseBuilder(state, *args, **kwargs)
+            else:
+                return state.response_for(*args, **kwargs)
 
-    return method_mock
+        return method_mock
+    else:
+        def method_mock(*args, **kwargs):
+            if state.is_open():
+                return _MockingResponseBuilder(state, *args, **kwargs)
+            else:
+                return state.response_for(*args, **kwargs)
+
+        return method_mock
 
 
 class _MockObject(Generic[T]):
@@ -282,14 +291,14 @@ class _MockingResponseBuilder(Generic[R], ResponseBuilder[R]):
     def then_return(self, result: R) -> None:
         self._method_state.set_response(result, *self._args, **self._kwargs)
 
-    def then_raise(self, error: Type[Exception]) -> None:
+    def then_raise(self, error: Exception) -> None:
         self._method_state.set_error_response(error, *self._args, **self._kwargs)
 
     def then_return_many(self, results: List[R], loop: bool = False) -> None:
         self._method_state.set_response_many(results, loop, *self._args, **self._kwargs)
 
 
-def _tmock(clazz: Type[T], type_safety: TypeSafety = TypeSafety.STRICT) -> T:
+def _tmock(clazz: T, type_safety: TypeSafety = TypeSafety.STRICT) -> T:
     """
     Mocks a given class.
 
@@ -317,5 +326,5 @@ def _tmock(clazz: Type[T], type_safety: TypeSafety = TypeSafety.STRICT) -> T:
     return _MockObject(clazz, type_safety)
 
 
-def _when(mock_function_call_result: T) -> _MockingResponseBuilder[T]:
+def _when(mock_function_call_result: T) -> ResponseBuilder[T]:
     return mock_function_call_result
