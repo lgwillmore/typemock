@@ -31,6 +31,7 @@ But, in python, we now have type hints. And so, we can explicitly define the con
    :maxdepth: 2
 
    quick_intro
+   type_safety
    mocking_objects
    verifying
 
