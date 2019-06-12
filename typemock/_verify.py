@@ -9,11 +9,23 @@ def _verify_method(method_state: _MockMethodState, exactly: int) -> Callable:
     def method_mock(*args, **kwargs):
         call_count = method_state.call_count_for(*args, **kwargs)
         if exactly == -1:
-            if call_count < 1:
-                raise VerifyError()
+            if call_count.count < 1:
+                raise VerifyError(
+                    "There were no interactions for method: {} with args: {} and there were {} other interactions".format(
+                        method_state.name, call_count.call, call_count.other_call_count
+                    )
+                )
         else:
-            if call_count != exactly:
-                raise VerifyError()
+            if call_count.count != exactly:
+                if call_count.count == 0:
+                    message = "There were no interactions for method: {} with args: {} and there were {} other interactions".format(
+                        method_state.name, call_count.call, call_count.other_call_count
+                    )
+                else:
+                    message = "There were {} interactions for method: {} with args: {}".format(
+                        call_count.count, method_state.name, call_count.call
+                    )
+                raise VerifyError(message)
 
     return method_mock
 

@@ -15,6 +15,14 @@ R = TypeVar('R')
 OrderedCallValues = Tuple[Tuple[str, Any], ...]
 
 
+class CallCount:
+
+    def __init__(self, call: OrderedCallValues, count: int, other_call_count: int):
+        self.call = call
+        self.count = count
+        self.other_call_count = other_call_count
+
+
 def _has_matchers(call: OrderedCallValues) -> bool:
     for call_param in call:
         if isinstance(call_param[1], Matcher):
@@ -122,15 +130,20 @@ class _MockMethodState(Generic[R]):
                 if matcher_key == key:
                     self._check_key_type_safety(key)
                     return responder.response(*args, **kwargs)
-            raise NoBehaviourSpecifiedError()
+            raise NoBehaviourSpecifiedError(
+                "No behaviour specified for method: {} with args: {}".format(self.name, key)
+            )
 
-    def call_count_for(self, *args, **kwargs) -> int:
+    def call_count_for(self, *args, **kwargs) -> CallCount:
+        other_count = 0
         count = 0
         expected_call = self._key(*args, **kwargs)
         for call in self._call_record:
             if call == expected_call:
                 count += 1
-        return count
+            else:
+                other_count += 1
+        return CallCount(expected_call, count, other_count)
 
     def _validate_return(self, response: R):
         func_annotations = self._func.__annotations__
