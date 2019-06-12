@@ -10,6 +10,7 @@ Type safe mocking for python 3.
 
 **NOTE: This library is still in Alpha. Its API and implementation could change.**
 
+[Detailed Documentation](typemock.readthedocs.io)
 
 ## Motivation
 
