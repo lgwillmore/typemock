@@ -5,11 +5,8 @@ from typemock.api import NoBehaviourSpecifiedError
 
 
 class MyThing:
-    some_instance_attribute: str = None
 
-    def __init__(self, some_attribute: str):
-        self.some_instance_attribute = some_attribute
-        self.attribute_added_in_init: bool = True
+    some_instance_attribute: str = None
 
     def return_a_str(self) -> str:
         pass

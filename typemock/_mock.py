@@ -251,22 +251,30 @@ class _MockAttributeState(Generic[R]):
 
     def __init__(self, name: str, initial_value: R):
         self.name = name
-        self.responder = ResponderBasic(initial_value)
+        self._responder = ResponderBasic(initial_value)
+        self._call_count = 0
 
     def _validate_return(self, response: R):
         pass
 
     def set_response(self, response: R):
         self._validate_return(response)
-        self.responder = ResponderBasic(response)
+        self._responder = ResponderBasic(response)
 
     def set_response_many(self, results: List[R], loop: bool):
         for response in results:
             self._validate_return(response)
-        self.responder = ResponderMany(results, loop)
+        self._responder = ResponderMany(results, loop)
 
     def set_error_response(self, error: Exception):
-        self.responder = ResponderRaise(error)
+        self._responder = ResponderRaise(error)
+
+    def response(self) -> R:
+        self._call_count += 1
+        return self._responder.response()
+
+    def call_count_gets(self) -> int:
+        return self._call_count
 
 
 class _MockObject(Generic[T], object):
@@ -312,7 +320,7 @@ class _MockObject(Generic[T], object):
         else:
             if item in self._mock_attribute_states:
                 state = self._mock_attribute_states[item]
-                return state.responder.response()
+                return state.response()
             else:
                 return object.__getattribute__(self, item)
 
