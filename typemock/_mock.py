@@ -311,7 +311,7 @@ class _MockingResponseBuilder(Generic[R], ResponseBuilder[R]):
         self._method_state.set_response_many(results, loop, *self._args, **self._kwargs)
 
 
-def _tmock(clazz: T, type_safety: TypeSafety = TypeSafety.STRICT) -> T:
+def _tmock(clazz: Type[T], type_safety: TypeSafety = TypeSafety.STRICT) -> T:
     """
     Mocks a given class.
 
