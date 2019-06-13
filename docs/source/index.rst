@@ -20,7 +20,7 @@ It is possible to build mocks which do not conform to the actual behaviour or co
 
 We do not have compile time protections for us doing things with/to things which do not align with the contracts they define and the clients of those contracts expect.
 
-But, now have type hints. And so, we can explicitly define the contracts of our objects, and, if we have done this, we can mock them in a type safe way as well. This is what this library aims to help achieve. Type safe mocking.
+But, now we have type hints. And so, we can explicitly define the contracts of our objects, and, if we have done this, we can mock them in a type safe way as well. This is what this library aims to help achieve. Type safe mocking.
 
 Used in conjunction with mypy, this should result in much more high fidelity independent tests.
 
