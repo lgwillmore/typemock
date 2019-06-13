@@ -15,7 +15,7 @@ def tmock(clazz: Type[T], type_safety: TypeSafety = TypeSafety.STRICT) -> T:
     return _tmock(clazz=clazz, type_safety=type_safety)
 
 
-def when(mock_call_result: T) -> ResponseBuilder[T]:
+def when(mock_call_result: R) -> ResponseBuilder[R]:
     return _when(mock_call_result=mock_call_result)
 
 

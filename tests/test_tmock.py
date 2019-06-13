@@ -5,7 +5,7 @@ from typemock.api import NoBehaviourSpecifiedError
 
 
 class MyThing:
-    some_instance_attribute: str
+    some_instance_attribute: str = None
 
     def __init__(self, some_attribute: str):
         self.some_instance_attribute = some_attribute
@@ -160,7 +160,7 @@ class TestBasicMethodMocking(TestCase):
                 actual = my_thing_mock.return_a_str()
                 self.assertEqual(expected, actual)
 
-    def test_mock_object__declared_attribute(self):
+    def test_mock_object__declared_attribute__simple_return(self):
         expected = "hello"
 
         with tmock(MyThing) as my_thing_mock:
@@ -169,5 +169,27 @@ class TestBasicMethodMocking(TestCase):
         actual = my_thing_mock.some_instance_attribute
 
         self.assertEqual(expected, actual)
+
+    def test_mock_object__declared_attribute__multiple(self):
+        expected_responses = [
+            "first response",
+            "second response"
+        ]
+
+        with tmock(MyThing) as my_thing_mock:
+            when(my_thing_mock.some_instance_attribute).then_return_many(expected_responses)
+
+        for expected in expected_responses:
+            actual = my_thing_mock.some_instance_attribute
+            self.assertEqual(expected, actual)
+
+    def test_mock_object__declared_attribute__then_raise(self):
+        expected_error = IOError()
+
+        with tmock(MyThing) as my_thing_mock:
+            when(my_thing_mock.some_instance_attribute).then_raise(expected_error)
+
+        with self.assertRaises(IOError):
+            actual = my_thing_mock.some_instance_attribute
 
 # TODO: We can still mock a context object - idea: setup can only happen on_first - successive contexts revert.

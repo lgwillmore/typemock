@@ -5,7 +5,7 @@ from types import FunctionType
 from typing import TypeVar, Generic, Type, Callable, List, Tuple, Any, Dict
 
 from typemock._safety import validate_class_type_hints
-from typemock._utils import methods, bind
+from typemock._utils import methods, bind, attributes
 from typemock.api import MockTypeSafetyError, NoBehaviourSpecifiedError, ResponseBuilder, TypeSafety
 from typemock.match import Matcher
 
@@ -51,7 +51,7 @@ class ResponderBasic(Generic[R], Responder[R]):
 
 class ResponderRaise(Responder[Type[Exception]]):
 
-    def __init__(self, error: Type[Exception]):
+    def __init__(self, error: Exception):
         self._error = error
 
     def response(self, *args, **kwargs) -> R:
@@ -232,7 +232,7 @@ def _mock_method(state: _MockMethodState) -> Callable:
     if inspect.iscoroutinefunction(state._func):
         async def method_mock(*args, **kwargs):
             if state.is_open():
-                return _MockingResponseBuilder(state, *args, **kwargs)
+                return _MethodResponseBuilder(state, *args, **kwargs)
             else:
                 return state.response_for(*args, **kwargs)
 
@@ -240,20 +240,45 @@ def _mock_method(state: _MockMethodState) -> Callable:
     else:
         def method_mock(*args, **kwargs):
             if state.is_open():
-                return _MockingResponseBuilder(state, *args, **kwargs)
+                return _MethodResponseBuilder(state, *args, **kwargs)
             else:
                 return state.response_for(*args, **kwargs)
 
         return method_mock
 
 
-class _MockObject(Generic[T]):
+class _MockAttributeState(Generic[R]):
+
+    def __init__(self, name: str, initial_value: R):
+        self.name = name
+        self.responder = ResponderBasic(initial_value)
+
+    def _validate_return(self, response: R):
+        pass
+
+    def set_response(self, response: R):
+        self._validate_return(response)
+        self.responder = ResponderBasic(response)
+
+    def set_response_many(self, results: List[R], loop: bool):
+        for response in results:
+            self._validate_return(response)
+        self.responder = ResponderMany(results, loop)
+
+    def set_error_response(self, error: Exception):
+        self.responder = ResponderRaise(error)
+
+
+class _MockObject(Generic[T], object):
 
     def __init__(self, mocked_class: Type[T], type_safety: TypeSafety):
         validate_class_type_hints(mocked_class, type_safety)
         self._mocked_class = mocked_class
         self._mock_method_states: List[_MockMethodState] = []
+        self._mock_attribute_states: Dict[str, _MockAttributeState] = {}
         self._open = False
+
+        # Set up method mocks
         for func_entry in methods(mocked_class):
             sig = inspect.signature(func_entry.func)
             method_state = _MockMethodState(
@@ -266,35 +291,57 @@ class _MockObject(Generic[T]):
             mock_method = _mock_method(method_state)
             bind(self, mock_method, func_entry.name)
 
+        # Set up attribute mocks
+        attributes_entries = attributes(mocked_class)
+        for attribute_entry in attributes_entries:
+            attribute_state = _MockAttributeState(
+                name=attribute_entry.name,
+                initial_value=attribute_entry.initial_value
+            )
+            self._mock_attribute_states[attribute_entry.name] = attribute_state
+
+    def __getattribute__(self, item: str):
+        if item.startswith("_") or item in {"is_open"}:
+            return object.__getattribute__(self, item)
+        if self.is_open():
+            if item in self._mock_attribute_states:
+                state = self._mock_attribute_states[item]
+                return _AttributeResponseBuilder(state)
+            else:
+                return object.__getattribute__(self, item)
+        else:
+            if item in self._mock_attribute_states:
+                state = self._mock_attribute_states[item]
+                return state.responder.response()
+            else:
+                return object.__getattribute__(self, item)
+
+    def __setattr__(self, key, item):
+        object.__setattr__(self, key, item)
+
     @property
     def __class__(self):
         return self._mocked_class
 
     def __enter__(self):
-        self.open_for_setup()
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.close_setup()
-
-    def __instancecheck__(self, instance):
-        return type(instance) == type(self._mocked_class)
-
-    def open_for_setup(self):
         self._open = True
         for method_state in self._mock_method_states:
             method_state.open_for_setup()
+        return self
 
-    def close_setup(self):
+    def __exit__(self, exc_type, exc_val, exc_tb):
         self._open = False
         for method_state in self._mock_method_states:
             method_state.close_setup()
+
+    def __instancecheck__(self, instance):
+        return type(instance) == type(self._mocked_class)
 
     def is_open(self) -> bool:
         return self._open
 
 
-class _MockingResponseBuilder(Generic[R], ResponseBuilder[R]):
+class _MethodResponseBuilder(Generic[R], ResponseBuilder[R]):
 
     def __init__(self, method_state: _MockMethodState, *args, **kwargs):
         self._method_state = method_state
@@ -309,6 +356,21 @@ class _MockingResponseBuilder(Generic[R], ResponseBuilder[R]):
 
     def then_return_many(self, results: List[R], loop: bool = False) -> None:
         self._method_state.set_response_many(results, loop, *self._args, **self._kwargs)
+
+
+class _AttributeResponseBuilder(Generic[R], ResponseBuilder[R]):
+
+    def __init__(self, attribute_state: _MockAttributeState):
+        self._attribute_state = attribute_state
+
+    def then_return(self, result: R) -> None:
+        self._attribute_state.set_response(result)
+
+    def then_raise(self, error: Exception) -> None:
+        self._attribute_state.set_error_response(error)
+
+    def then_return_many(self, results: List[R], loop: bool = False) -> None:
+        self._attribute_state.set_response_many(results, loop)
 
 
 def _tmock(clazz: Type[T], type_safety: TypeSafety = TypeSafety.STRICT) -> T:

@@ -1,3 +1,4 @@
+import inspect
 from types import FunctionType
 from typing import List
 
@@ -9,8 +10,18 @@ class FunctionEntry:
         self.func = func
 
 
+class AttributeEntry:
+    def __init__(self, name: str, initial_value):
+        self.name = name
+        self.initial_value = initial_value
+
+
 def _is_magic(name: str) -> bool:
     return name.startswith("__") and name.endswith("__")
+
+
+def _is_private(name: str) -> bool:
+    return name.startswith("_")
 
 
 def methods(cls, include_private=False) -> List[FunctionEntry]:
@@ -31,6 +42,15 @@ def methods(cls, include_private=False) -> List[FunctionEntry]:
                     func=func
                 ))
     return function_entries
+
+
+def attributes(cls) -> List[AttributeEntry]:
+    entries = []
+    attributes = inspect.getmembers(cls, lambda a: not (inspect.isroutine(a)))
+    attributes = [a for a in attributes if not _is_magic(a[0]) and not _is_private(a[0])]
+    for attribute in attributes:
+        entries.append(AttributeEntry(name=attribute[0], initial_value=attribute[1]))
+    return entries
 
 
 def bind(instance, func, as_name=None):
