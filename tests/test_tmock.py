@@ -5,6 +5,11 @@ from typemock.api import NoBehaviourSpecifiedError
 
 
 class MyThing:
+    some_instance_attribute: str
+
+    def __init__(self, some_attribute: str):
+        self.some_instance_attribute = some_attribute
+        self.attribute_added_in_init: bool = True
 
     def return_a_str(self) -> str:
         pass
@@ -154,5 +159,15 @@ class TestBasicMethodMocking(TestCase):
             for expected in expected_responses:
                 actual = my_thing_mock.return_a_str()
                 self.assertEqual(expected, actual)
+
+    def test_mock_object__declared_attribute(self):
+        expected = "hello"
+
+        with tmock(MyThing) as my_thing_mock:
+            when(my_thing_mock.some_instance_attribute).then_return(expected)
+
+        actual = my_thing_mock.some_instance_attribute
+
+        self.assertEqual(expected, actual)
 
 # TODO: We can still mock a context object - idea: setup can only happen on_first - successive contexts revert.

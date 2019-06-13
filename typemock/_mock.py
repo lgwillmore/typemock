@@ -339,5 +339,5 @@ def _tmock(clazz: Type[T], type_safety: TypeSafety = TypeSafety.STRICT) -> T:
     return _MockObject(clazz, type_safety)
 
 
-def _when(mock_function_call_result: T) -> ResponseBuilder[T]:
-    return mock_function_call_result
+def _when(mock_call_result: T) -> ResponseBuilder[T]:
+    return mock_call_result

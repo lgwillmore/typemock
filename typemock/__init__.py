@@ -1,4 +1,4 @@
-from typing import TypeVar, Callable, Type, Optional
+from typing import TypeVar, Type
 
 from typemock._mock import (
     _tmock,
@@ -10,6 +10,14 @@ from typemock.api import TypeSafety, ResponseBuilder
 T = TypeVar('T')
 R = TypeVar('R')
 
-tmock: Callable[[Type[T], Optional[TypeSafety]], T] = _tmock
-when: Callable[[T], ResponseBuilder[T]] = _when
-verify: Callable[[T], T] = _verify
+
+def tmock(clazz: Type[T], type_safety: TypeSafety = TypeSafety.STRICT) -> T:
+    return _tmock(clazz=clazz, type_safety=type_safety)
+
+
+def when(mock_call_result: T) -> ResponseBuilder[T]:
+    return _when(mock_call_result=mock_call_result)
+
+
+def verify(mock: T, exactly: int = -1) -> T:
+    return _verify(mock=mock, exactly=exactly)
