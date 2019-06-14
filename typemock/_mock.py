@@ -247,12 +247,21 @@ def _mock_method(state: _MockMethodState) -> Callable:
         return method_mock
 
 
+class CalledSetRecord:
+
+    def __init__(self, call: Any, count: int, other_call_count: int):
+        self.call = call
+        self.count = count
+        self.other_call_count = other_call_count
+
+
 class _MockAttributeState(Generic[R]):
 
     def __init__(self, name: str, initial_value: R):
         self.name = name
         self._responder = ResponderBasic(initial_value)
         self._call_count = 0
+        self._set_calls: List[R] = []
 
     def _validate_return(self, response: R):
         pass
@@ -275,6 +284,20 @@ class _MockAttributeState(Generic[R]):
 
     def call_count_gets(self) -> int:
         return self._call_count
+
+    def called_set_with(self, item):
+        self._set_calls.append(item)
+        self._responder = ResponderBasic(item)
+
+    def called_set_record(self, expected_call) -> CalledSetRecord:
+        other_count = 0
+        count = 0
+        for call in self._set_calls:
+            if expected_call == call:
+                count += 1
+            else:
+                other_count += 1
+        return CalledSetRecord(expected_call, count, other_count)
 
 
 class _MockObject(Generic[T], object):
@@ -325,6 +348,13 @@ class _MockObject(Generic[T], object):
                 return object.__getattribute__(self, item)
 
     def __setattr__(self, key, item):
+        if hasattr(self, "_mock_attribute_states"):
+            mock_attribute_states = self._mock_attribute_states
+            if key in mock_attribute_states:
+                if self.is_open():
+                    raise Exception("Cannot mock behaviour of setting an attribute at this time")
+                state = mock_attribute_states[key]
+                state.called_set_with(item)
         object.__setattr__(self, key, item)
 
     @property

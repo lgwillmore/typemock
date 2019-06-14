@@ -5,7 +5,6 @@ from typemock.api import NoBehaviourSpecifiedError
 
 
 class MyThing:
-
     some_instance_attribute: str = None
 
     def return_a_str(self) -> str:
@@ -157,7 +156,7 @@ class TestBasicMethodMocking(TestCase):
                 actual = my_thing_mock.return_a_str()
                 self.assertEqual(expected, actual)
 
-    def test_mock_object__declared_attribute__simple_return(self):
+    def test_mock_object__declared_attribute__get__simple_return(self):
         expected = "hello"
 
         with tmock(MyThing) as my_thing_mock:
@@ -167,7 +166,7 @@ class TestBasicMethodMocking(TestCase):
 
         self.assertEqual(expected, actual)
 
-    def test_mock_object__declared_attribute__multiple(self):
+    def test_mock_object__declared_attribute__get__multiple(self):
         expected_responses = [
             "first response",
             "second response"
@@ -180,7 +179,7 @@ class TestBasicMethodMocking(TestCase):
             actual = my_thing_mock.some_instance_attribute
             self.assertEqual(expected, actual)
 
-    def test_mock_object__declared_attribute__then_raise(self):
+    def test_mock_object__declared_attribute__get__then_raise(self):
         expected_error = IOError()
 
         with tmock(MyThing) as my_thing_mock:

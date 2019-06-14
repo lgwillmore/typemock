@@ -1,7 +1,7 @@
 Mocking an Object
 =================
 
-The `DSL` for defining and using **typemock** takes much of its inspiration from the mocking libraries of statically typed languages.
+The `DSL` for defining and using **typemock** takes much of its inspiration from the mocking libraries of statically typed languages, kotlin's mockk library in particular.
 
 First, let us define a class that we wish to mock.
 

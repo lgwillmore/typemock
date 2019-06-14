@@ -4,6 +4,8 @@
 
 Type safe mocking for python 3.
 
+With a style inspired by kotlin's mockk library.
+
 1. [Motivation](#motivation)
 2. [Quick example usage](#quick-example-usage)
 3. [Still to do](#still-to-do)
