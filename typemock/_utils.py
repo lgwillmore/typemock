@@ -1,6 +1,10 @@
 import inspect
 from types import FunctionType
-from typing import List
+from typing import List, Type
+
+
+class Blank:
+    pass
 
 
 class FunctionEntry:
@@ -11,9 +15,10 @@ class FunctionEntry:
 
 
 class AttributeEntry:
-    def __init__(self, name: str, initial_value):
+    def __init__(self, name: str, initial_value, type_hint: Type):
         self.name = name
         self.initial_value = initial_value
+        self.type_hint = type_hint
 
 
 def _is_magic(name: str) -> bool:
@@ -46,10 +51,18 @@ def methods(cls, include_private=False) -> List[FunctionEntry]:
 
 def attributes(cls) -> List[AttributeEntry]:
     entries = []
+    annotations = cls.__dict__.get("__annotations__", {})
     attributes = inspect.getmembers(cls, lambda a: not (inspect.isroutine(a)))
     attributes = [a for a in attributes if not _is_magic(a[0]) and not _is_private(a[0])]
     for attribute in attributes:
-        entries.append(AttributeEntry(name=attribute[0], initial_value=attribute[1]))
+        type_hint = annotations.get(attribute[0], Blank)
+        entries.append(
+            AttributeEntry(
+                name=attribute[0],
+                initial_value=attribute[1],
+                type_hint=type_hint
+            )
+        )
     return entries
 
 

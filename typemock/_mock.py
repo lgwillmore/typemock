@@ -5,7 +5,7 @@ from types import FunctionType
 from typing import TypeVar, Generic, Type, Callable, List, Tuple, Any, Dict
 
 from typemock._safety import validate_class_type_hints
-from typemock._utils import methods, bind, attributes
+from typemock._utils import methods, bind, attributes, Blank
 from typemock.api import MockTypeSafetyError, NoBehaviourSpecifiedError, ResponseBuilder, TypeSafety
 from typemock.match import Matcher
 
@@ -257,14 +257,20 @@ class CalledSetRecord:
 
 class _MockAttributeState(Generic[R]):
 
-    def __init__(self, name: str, initial_value: R):
+    def __init__(self, name: str, initial_value: R, type_hint: Type):
         self.name = name
+        self.type_hint = type_hint
         self._responder = ResponderBasic(initial_value)
         self._call_count = 0
         self._set_calls: List[R] = []
 
     def _validate_return(self, response: R):
-        pass
+        if not isinstance(self.type_hint, Blank):
+            if not isinstance(response, self.type_hint):
+                raise MockTypeSafetyError("Attribute: {} must be of type:{}".format(
+                    self.name,
+                    self.type_hint,
+                ))
 
     def set_response(self, response: R):
         self._validate_return(response)
@@ -327,7 +333,8 @@ class _MockObject(Generic[T], object):
         for attribute_entry in attributes_entries:
             attribute_state = _MockAttributeState(
                 name=attribute_entry.name,
-                initial_value=attribute_entry.initial_value
+                initial_value=attribute_entry.initial_value,
+                type_hint=attribute_entry.type_hint
             )
             self._mock_attribute_states[attribute_entry.name] = attribute_state
 

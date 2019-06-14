@@ -11,6 +11,8 @@ class ClassWithNoResponseType:
 
 
 class ClassWithMultipleUnHintedThings:
+    a_hinted_attribute: str = "initial_hinted"
+    an_unhinted_attribute = "initial_not_hinted"
 
     def __init__(self):
         # We do not care about type hints for magic methods
@@ -34,6 +36,7 @@ class ClassWithMultipleUnHintedThings:
 
 
 class MyThing:
+    a_hinted_str_attribute: str = "initial"
 
     def return_a_str(self) -> str:
         pass
@@ -52,6 +55,7 @@ class TestSafety(TestCase):
 
     def test_validate_class_type_hints__strict(self):
         expected_missing_type_hints = [
+            MissingHint(["an_unhinted_attribute"], MemberType.ATTRIBUTE),
             MissingHint(["method_with_missing_arg_hint", "something"], MemberType.ARG),
             MissingHint(["method_with_missing_return_type"], MemberType.RETURN),
         ]
@@ -64,6 +68,7 @@ class TestSafety(TestCase):
 
     def test_validate_class_type_hints__no_return_is_none_return(self):
         expected_missing_type_hints = [
+            MissingHint(["an_unhinted_attribute"], MemberType.ATTRIBUTE),
             MissingHint(["method_with_missing_arg_hint", "something"], MemberType.ARG),
         ]
 
@@ -93,9 +98,15 @@ class TestSafety(TestCase):
         self._try_to_specify_non_type_safe_return_type__simple_type(TypeSafety.RELAXED)
 
     def _try_to_specify_non_type_safe_return_type__simple_type(self, type_safety: TypeSafety):
+        # Method
         with self.assertRaises(MockTypeSafetyError):
             with tmock(MyThing, type_safety=type_safety) as my_thing_mock:
                 when(my_thing_mock.convert_int_to_str(1)).then_return(2)
+
+        # Attribute get
+        with self.assertRaises(MockTypeSafetyError):
+            with tmock(MyThing, type_safety=type_safety) as my_thing_mock:
+                when(my_thing_mock.a_hinted_str_attribute).then_return(1)
 
     def test_try_to_specify_non_type_safe_return_type__simple_type__return_many(self):
         self._try_to_specify_non_type_safe_return_type__simple_type__return_many(TypeSafety.STRICT)
