@@ -292,6 +292,7 @@ class _MockAttributeState(Generic[R]):
         return self._call_count
 
     def called_set_with(self, item):
+        self._validate_return(item)
         self._set_calls.append(item)
         self._responder = ResponderBasic(item)
 

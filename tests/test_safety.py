@@ -118,7 +118,19 @@ class TestSafety(TestCase):
             with tmock(MyThing, type_safety=type_safety) as my_thing_mock:
                 when(my_thing_mock.convert_int_to_str(1)).then_return_many(["okay", 1])
 
-    # TODO: Attribute and Property type safety. Recursive type safety for nested objects (only their attributes and properties).
+    def test_try_to_set_attribute_with_incorrect_type(self):
+        self._try_to_set_attribute_with_incorrect_type(TypeSafety.STRICT)
+        self._try_to_set_attribute_with_incorrect_type(TypeSafety.NO_RETURN_IS_NONE_RETURN)
+        self._try_to_set_attribute_with_incorrect_type(TypeSafety.RELAXED)
+
+    def _try_to_set_attribute_with_incorrect_type(self, type_safety: TypeSafety.STRICT):
+        my_thing_mock = tmock(MyThing, type_safety=type_safety)
+
+        # Method
+        with self.assertRaises(MockTypeSafetyError):
+            my_thing_mock.a_hinted_str_attribute = 1
+
+    # TODO: Recursive type safety for nested objects (only their attributes and properties).
 
 
 class TestTypeSafetyRelaxed(TestCase):
