@@ -67,14 +67,6 @@ Things to note:
 
  - The mocked object must be used as a context manager in order to specify behaviour.
  - You must let the context close in order to use the defined behaviour.
- 
-### Type safety
-
-And when we try to specify behaviour that does not conform to the contract of the object we are mocking
-
-```python
-expected_result = "a string"
-
 with tmock(MyThing) as my_thing_mock:
     when(my_thing_mock.multiple_arg(prefix="p", number="should be an int")).then_return(expected_result)
 ```
@@ -91,7 +83,8 @@ Things to note:
 
 ## Still to do
 
- - Mock attributes and properties.
+ - Mock properties.
+ - Mock classes and instances of classes (currently only classes expected)
  - Check/implement more complex type safety (nested objects)
  - More behaviour specifications (Programmatic responses)
  - Better docs and examples

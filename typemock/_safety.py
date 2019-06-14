@@ -48,7 +48,7 @@ def _validate_attributes(clazz: Type[T], type_safety: TypeSafety, missing: List[
 
 
 def get_missing_class_type_hints(clazz: Type[T], type_safety: TypeSafety) -> List[MissingHint]:
-    missing = []
+    missing : List[MissingHint]= []
     _validate_attributes(clazz, type_safety, missing)
     _validate_method_annotations(clazz, type_safety, missing)
     return missing

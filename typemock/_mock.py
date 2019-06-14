@@ -2,11 +2,11 @@ import inspect
 from abc import ABC, abstractmethod
 from inspect import Signature
 from types import FunctionType
-from typing import TypeVar, Generic, Type, Callable, List, Tuple, Any, Dict
+from typing import TypeVar, Generic, Type, Callable, List, Tuple, Any, Dict, cast
 
 from typemock._safety import validate_class_type_hints
 from typemock._utils import methods, bind, attributes, Blank
-from typemock.api import MockTypeSafetyError, NoBehaviourSpecifiedError, ResponseBuilder, TypeSafety
+from typemock.api import MockTypeSafetyError, NoBehaviourSpecifiedError, ResponseBuilder, TypeSafety, MockingError
 from typemock.match import Matcher
 
 T = TypeVar('T')
@@ -49,7 +49,7 @@ class ResponderBasic(Generic[R], Responder[R]):
         return self._response
 
 
-class ResponderRaise(Responder[Type[Exception]]):
+class ResponderRaise(Responder[Exception]):
 
     def __init__(self, error: Exception):
         self._error = error
@@ -89,11 +89,11 @@ class _MockMethodState(Generic[R]):
         self._func = func
         self._signature = signature
         self._type_safety = type_safety
-        self._responses: Dict[OrderedCallValues, Responder[R]] = {}
-        self._matcher_responses: Dict[OrderedCallValues, Responder[R]] = {}
+        self._responses: Dict[OrderedCallValues, Responder] = {}
+        self._matcher_responses: Dict[OrderedCallValues, Responder] = {}
         self._open = False
-        self._arg_index_to_arg_name = {}
-        self._arg_name_to_parameter = {}
+        self._arg_index_to_arg_name: Dict[int, str] = {}
+        self._arg_name_to_parameter: Dict[str, inspect.Parameter] = {}
         self._call_record: List[OrderedCallValues] = []
         i = 0
         for name, param in signature.parameters.items():
@@ -101,7 +101,7 @@ class _MockMethodState(Generic[R]):
             self._arg_name_to_parameter[name] = param
             i += 1
 
-    def _key(self, *args, **kwargs) -> OrderedCallValues:
+    def _ordered_call(self, *args, **kwargs) -> OrderedCallValues:
         args_dict = {}
         for i in range(1, len(args)):
             arg = args[i]
@@ -117,11 +117,11 @@ class _MockMethodState(Generic[R]):
                 self._arg_name_to_parameter[name].default
             )
             ordered_key_values.append((name, value))
-        key = tuple(ordered_key_values)
-        return key
+        ordered_call = tuple(ordered_key_values)
+        return ordered_call
 
     def response_for(self, *args, **kwargs) -> R:
-        key = self._key(*args, **kwargs)
+        key = self._ordered_call(*args, **kwargs)
         self._call_record.append(key)
         if key in self._responses:
             return self._responses[key].response(*args, **kwargs)
@@ -137,7 +137,7 @@ class _MockMethodState(Generic[R]):
     def call_count_for(self, *args, **kwargs) -> CallCount:
         other_count = 0
         count = 0
-        expected_call = self._key(*args, **kwargs)
+        expected_call = self._ordered_call(*args, **kwargs)
         for call in self._call_record:
             if call == expected_call:
                 count += 1
@@ -176,7 +176,7 @@ class _MockMethodState(Generic[R]):
                     ))
 
     def set_response(self, response: R, *args, **kwargs):
-        key = self._key(*args, **kwargs)
+        key = self._ordered_call(*args, **kwargs)
         self._check_key_type_safety(key)
         self._validate_return(response)
         if _has_matchers(key):
@@ -185,7 +185,7 @@ class _MockMethodState(Generic[R]):
             self._responses[key] = ResponderBasic(response)
 
     def set_response_many(self, results: List[R], loop: bool, *args, **kwargs):
-        key = self._key(*args, **kwargs)
+        key = self._ordered_call(*args, **kwargs)
         self._check_key_type_safety(key)
         for response in results:
             self._validate_return(response)
@@ -194,8 +194,8 @@ class _MockMethodState(Generic[R]):
         else:
             self._responses[key] = ResponderMany(results, loop)
 
-    def set_error_response(self, error: Type[Exception], *args, **kwargs):
-        key = self._key(*args, **kwargs)
+    def set_error_response(self, error: Exception, *args, **kwargs):
+        key = self._ordered_call(*args, **kwargs)
         self._check_key_type_safety(key)
         if _has_matchers(key):
             self._matcher_responses[key] = ResponderRaise(error)
@@ -260,7 +260,7 @@ class _MockAttributeState(Generic[R]):
     def __init__(self, name: str, initial_value: R, type_hint: Type):
         self.name = name
         self.type_hint = type_hint
-        self._responder = ResponderBasic(initial_value)
+        self._responder: Responder = ResponderBasic(initial_value)
         self._call_count = 0
         self._set_calls: List[R] = []
 
@@ -319,7 +319,7 @@ class _MockObject(Generic[T], object):
         # Set up method mocks
         for func_entry in methods(mocked_class):
             sig = inspect.signature(func_entry.func)
-            method_state = _MockMethodState(
+            method_state: _MockMethodState = _MockMethodState(
                 name=func_entry.name,
                 signature=sig,
                 func=func_entry.func,
@@ -365,7 +365,7 @@ class _MockObject(Generic[T], object):
                 state.called_set_with(item)
         object.__setattr__(self, key, item)
 
-    @property
+    @property  # type: ignore
     def __class__(self):
         return self._mocked_class
 
@@ -444,8 +444,12 @@ def _tmock(clazz: Type[T], type_safety: TypeSafety = TypeSafety.STRICT) -> T:
         mock:
 
     """
-    return _MockObject(clazz, type_safety)
+    return cast(T, _MockObject(clazz, type_safety))
 
 
 def _when(mock_call_result: T) -> ResponseBuilder[T]:
-    return mock_call_result
+    if not isinstance(mock_call_result, ResponseBuilder):
+        raise MockingError(
+            "Did not receive a response builder. Are you trying to specify behaviour outside of the mock context?"
+        )
+    return cast(ResponseBuilder[T], mock_call_result)

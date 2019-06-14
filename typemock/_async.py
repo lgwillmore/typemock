@@ -1,4 +1,4 @@
-from typing import Awaitable, Any, Iterator
+from typing import Awaitable, Any, Iterator, Generator
 
 
 class SimpleResponseAwaitable(Awaitable):
@@ -6,5 +6,5 @@ class SimpleResponseAwaitable(Awaitable):
     def __init__(self, response: Any):
         self._response = response
 
-    def __await__(self) -> Iterator[Any]:
+    def __await__(self) -> Generator[Any, Any, Any]:
         yield self._response

@@ -90,3 +90,6 @@ class NoBehaviourSpecifiedError(Exception):
 
 class VerifyError(Exception):
     pass
+
+class MockingError(Exception):
+    pass

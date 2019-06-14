@@ -1,4 +1,4 @@
-from typing import Callable, Generic
+from typing import Callable, Generic, cast
 
 from typemock._mock import _MockMethodState, T, _MockObject
 from typemock._utils import bind
@@ -106,4 +106,4 @@ class _VerifyObject(Generic[T]):
 
 
 def _verify(mock: T, exactly: int = -1) -> T:
-    return _VerifyObject(mock, exactly=exactly)
+    return cast(T, _VerifyObject(cast(_MockObject[T], mock), exactly=exactly))
