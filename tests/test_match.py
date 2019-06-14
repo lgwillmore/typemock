@@ -54,7 +54,7 @@ class TestMockObjectMatching(TestCase):
         with self.assertRaises(IOError):
             my_thing_mock.convert_int_to_str(2)
 
-    def testwhen_we_have_matcher_based_behaviour_type_safety_is_enforced_on_call(self):
+    def test_when_we_have_matcher_based_behaviour_type_safety_is_enforced_on_call(self):
         expected = "a string"
         with tmock(MyThing) as my_thing_mock:
             when(my_thing_mock.convert_int_to_str(match.anything())).then_return(expected)

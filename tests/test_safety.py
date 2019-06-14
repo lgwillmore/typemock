@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from typemock import tmock, when
+from typemock import tmock, when, match
 from typemock.api import MemberType, MissingHint, MissingTypeHintsError, MockTypeSafetyError, TypeSafety
 
 
