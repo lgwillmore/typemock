@@ -380,9 +380,6 @@ class _MockObject(Generic[T], object):
         for method_state in self._mock_method_states:
             method_state.close_setup()
 
-    def __instancecheck__(self, instance):
-        return type(instance) == type(self._mocked_class)
-
     def is_open(self) -> bool:
         return self._open
 

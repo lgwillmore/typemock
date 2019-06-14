@@ -186,6 +186,6 @@ class TestBasicMethodMocking(TestCase):
             when(my_thing_mock.some_instance_attribute).then_raise(expected_error)
 
         with self.assertRaises(IOError):
-            actual = my_thing_mock.some_instance_attribute
+            my_thing_mock.some_instance_attribute
 
 # TODO: We can still mock a context object - idea: setup can only happen on_first - successive contexts revert.

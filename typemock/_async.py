@@ -1,4 +1,4 @@
-from typing import Awaitable, Any, Iterator, Generator
+from typing import Awaitable, Any, Generator
 
 
 class SimpleResponseAwaitable(Awaitable):

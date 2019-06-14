@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import TypeVar, List, Generic, Type
+from typing import TypeVar, List, Generic
 
 T = TypeVar('T')
 R = TypeVar('R')
@@ -90,6 +90,7 @@ class NoBehaviourSpecifiedError(Exception):
 
 class VerifyError(Exception):
     pass
+
 
 class MockingError(Exception):
     pass
