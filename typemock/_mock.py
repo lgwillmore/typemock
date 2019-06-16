@@ -316,7 +316,10 @@ class _MockObject(Generic[T], object):
         else:
             mocked_class: Type[T] = mocked_thing
             mocked_instance: Optional[T] = try_instantiate_class(mocked_thing)
-        validate_class_type_hints(mocked_class, type_safety)
+        validate_class_type_hints(
+            clazz=mocked_class,
+            instance=mocked_instance,
+            type_safety=type_safety)
         self._mocked_class = mocked_class
         self._mock_method_states: List[_MockMethodState] = []
         self._mock_attribute_states: Dict[str, _MockAttributeState] = {}
