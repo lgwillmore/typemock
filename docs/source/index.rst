@@ -8,7 +8,7 @@ typemock: type safe mocking
 
 .. warning::
 
-   This library is still in Alpha. API and implementation could change.
+   This library is still in Alpha. API and implementation could change, and functionality is also not complete.
 
 The mocking tools in python are powerful, flexible and useful for building independent tests at various levels.
 
@@ -33,13 +33,14 @@ Used in conjunction with mypy, this should result in much more high fidelity ind
    We are going to just ignore all of that. If you want, you can alias the `tmock` function to `tfake` or something like that?
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
 
    quick_intro
    installation
    type_safety
    mocking_objects
    verifying
+   to_do
 
 
 

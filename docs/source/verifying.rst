@@ -85,4 +85,73 @@ And all of the previous examples have been verifying calls with specific args. W
 Verifying Attributes
 ####################
 
-// TODO: Examples of `get` and `set` attribute verification. It works pretty much the same as method calls though.
+Given the following class to mock:
+
+.. code-block:: python
+
+    class MyThing:
+
+            name: str = "anonymous"
+
+
+We can verify interactions with its attribute as follows.
+
+Get called at least once
+------------------------
+
+
+.. code-block:: python
+
+    my_thing_mock =  tmock(MyThing)
+
+    # Logic under test is called.
+
+    verify(my_thing_mock).name
+
+
+Get called exact amount of times
+--------------------------------
+
+
+.. code-block:: python
+
+    my_thing_mock =  tmock(MyThing)
+
+    # Logic under test is called.
+
+    verify(my_thing_mock, exactly=2).name
+
+Set called with specific arg
+----------------------------
+
+.. code-block:: python
+
+    my_thing_mock =  tmock(MyThing)
+
+    # Logic under test is called.
+
+    verify(my_thing_mock).name = 2
+
+
+Set called with any arg
+-----------------------
+
+.. code-block:: python
+
+    my_thing_mock =  tmock(MyThing)
+
+    # Logic under test is called.
+
+    verify(my_thing_mock).name = match.anything()
+
+
+Set called exact amount of times
+--------------------------------
+
+.. code-block:: python
+
+    my_thing_mock =  tmock(MyThing)
+
+    # Logic under test is called.
+
+    verify(my_thing_mock, exactly=1).name = 2

@@ -112,6 +112,36 @@ class TestSafety(TestCase):
             with tmock(MyThing, type_safety=type_safety) as my_thing_mock:
                 when(my_thing_mock.convert_int_to_str("not an int")).then_return("another string")
 
+    def test_try_to_specify_behaviour_with_missing_args(self):
+        self._try_to_specify_behaviour_with_missing_args(TypeSafety.STRICT)
+        self._try_to_specify_behaviour_with_missing_args(TypeSafety.NO_RETURN_IS_NONE_RETURN)
+        self._try_to_specify_behaviour_with_missing_args(TypeSafety.RELAXED)
+
+    def _try_to_specify_behaviour_with_missing_args(self, type_safety: TypeSafety):
+        with self.assertRaises(MockTypeSafetyError):
+            with tmock(MyThing, type_safety=type_safety) as my_thing_mock:
+                when(my_thing_mock.convert_int_to_str()).then_return("another string")
+
+    def test_try_to_specify_behaviour_with_extra_args(self):
+        self._try_to_specify_behaviour_with_extra_args(TypeSafety.STRICT)
+        self._try_to_specify_behaviour_with_extra_args(TypeSafety.NO_RETURN_IS_NONE_RETURN)
+        self._try_to_specify_behaviour_with_extra_args(TypeSafety.RELAXED)
+
+    def _try_to_specify_behaviour_with_extra_args(self, type_safety: TypeSafety):
+        with self.assertRaises(MockTypeSafetyError):
+            with tmock(MyThing, type_safety=type_safety) as my_thing_mock:
+                when(my_thing_mock.convert_int_to_str(1, 2)).then_return("another string")
+
+    def test_try_to_specify_behaviour_with_extra_kwargs(self):
+        self._try_to_specify_behaviour_with_extra_kwargs(TypeSafety.STRICT)
+        self._try_to_specify_behaviour_with_extra_kwargs(TypeSafety.NO_RETURN_IS_NONE_RETURN)
+        self._try_to_specify_behaviour_with_extra_kwargs(TypeSafety.RELAXED)
+
+    def _try_to_specify_behaviour_with_extra_kwargs(self, type_safety: TypeSafety):
+        with self.assertRaises(MockTypeSafetyError):
+            with tmock(MyThing, type_safety=type_safety) as my_thing_mock:
+                when(my_thing_mock.convert_int_to_str(number=1, another=2)).then_return("another string")
+
     def test_try_to_specify_non_type_safe_return_type__simple_type(self):
         self._try_to_specify_non_type_safe_return_type__simple_type(TypeSafety.STRICT)
         self._try_to_specify_non_type_safe_return_type__simple_type(TypeSafety.NO_RETURN_IS_NONE_RETURN)

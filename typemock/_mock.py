@@ -102,11 +102,23 @@ class _MockMethodState(Generic[R]):
             i += 1
 
     def _ordered_call(self, *args, **kwargs) -> OrderedCallValues:
+        if len(args) > len(self._arg_index_to_arg_name):
+            raise MockTypeSafetyError("Method: {} cannot be called with args:{} kwargs{}".format(
+                self.name,
+                args[1:],
+                kwargs
+            ))
         args_dict = {}
         for i in range(1, len(args)):
             arg = args[i]
             args_dict[self._arg_index_to_arg_name[i]] = arg
         for key, value in kwargs.items():
+            if key not in self._arg_name_to_parameter:
+                raise MockTypeSafetyError("Method: {} cannot be called with args:{} kwargs{}".format(
+                    self.name,
+                    args[1:],
+                    kwargs
+                ))
             args_dict[key] = value
         ordered_key_values = []
         for name, param in self._signature.parameters.items():
