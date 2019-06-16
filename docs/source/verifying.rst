@@ -5,6 +5,10 @@ Verification is important for checking that an interaction did or did not happen
 
 Typemock currently only has quite limited verification, but it is good for most use cases.
 
+
+Verifying Methods
+#################
+
 Given the following class to mock:
 
 .. code-block:: python
@@ -13,6 +17,9 @@ Given the following class to mock:
 
         def convert_int_to_str(self, number: int) -> str:
             pass
+
+
+We can verify method interactions in the following ways:
 
 At least once
 -------------
@@ -73,3 +80,9 @@ And all of the previous examples have been verifying calls with specific args. W
     # Logic under test is called.
 
     verify(my_thing_mock).convert_int_to_str(match.anything())
+
+
+Verifying Attributes
+####################
+
+// TODO: Examples of `get` and `set` attribute verification. It works pretty much the same as method calls though.

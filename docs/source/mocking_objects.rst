@@ -21,18 +21,20 @@ and:
 
         # define mock behaviour
 
-are both acceptable. There may however be cases where it is preferable to pass in an instance of the class rather then the class itself; when you need to let the mock discover an instance level attribute that is defined on instantiation. See more in the `Attributes`_ section.
+are both acceptable.
+
+There will be cases where, if an instance of the class has complex `__init__` functionality, then mocking a class will not be able to discover instance level attributes. In this case, you can attempt to mock an already initialised instance to resolve this. See more in the `Mocking Attributes`_ section.
 
 .. note::
 
     - You must specify the behaviour of any method that your test is going to interact with. Interacting with a method with no specified behaviour results in an error.
     - Typemock does not do static patching of the class being mocked. Any mocked behaviour will only be available fro the mock instance itself, not via a class accessed call.
-    - Instance level attributes are only available for mocking if you mock an instance, not the class
+    - Instance level attributes might not be available if the `__init__` method has some more complex logic. Use an already instantiated object in this case.
 
 Now lets look at how to specify the behaviour for a mocked class or object.
 
-Methods
-#######
+Mocking Methods
+###############
 
 First, let us define a class that we wish to mock.
 
@@ -165,8 +167,8 @@ We can also mock async methods. It just requires the addition an `await` key wor
 .. note::
     The the verify call does not need the `await` key word.
 
-Attributes
-##########
+Mocking Attributes
+##################
 
 Attributes are a little trickier than methods, given the layered namespaces of an instance of a class and the class itself.
 
@@ -198,12 +200,14 @@ For now, `typemock` does its best to determine the type hints of attributes, and
 
 It might take some time to digest that, but essentially, effective attribute type hinting takes place either at a class level, or in the `__init__` method signature.
 
-Also, when it comes to attributes, it is best to `tmock` an instance of the class if you want to have all attributes available for mocking.
+If you pass in a class to the `tmock` function, typemock will try to instantiate an instance of the class so that it can discover instance level attributes. If some more complicated logic occurs in the `__init__` method though, typemock may not be able to do this, and will log a warning.
+In this case, if you want to mock an instance level attribute you will need to provide an already instantiated instance to the `tmock` function.
+
 
 To some up the basic guidelines for mocking attributes:
 
     - Define your type hints at a class level or in the `__init__` method signature.
-    - Mock an instance not the class.
+    - If the `__init__` method of the class has some more complex logic, you may need to provide an instantiated instance to `tmock`
 
 Depending on how this works in practice this may change, or some config may be introduced to assume attribute types from initial values.
 
@@ -216,6 +220,10 @@ With that quirkiness explained to some extent, let us look at how to actually mo
             name: str = "anonymous"
 
 
+.. note::
+
+    Currently, it is also not necessary to always specify behaviour of an attribute. It will by default return the value it was initialised with.
+
 Simple Get
 ----------
 
@@ -223,7 +231,39 @@ Just as with a method call, we can specify the response of a `get`.
 
 .. code-block:: python
 
-    with tmock(MyThing()) as my_thing_mock:
+    with tmock(MyThing) as my_thing_mock:
         when(my_thing_mock.name).then_return("foo")
 
     assert my_thing_mock.name == "foo"
+
+
+Get Many
+--------
+
+.. code-block:: python
+
+    expected_results = [
+       "foo",
+       "bar"
+    ]
+
+    with tmock(MyThing) as my_thing_mock:
+        when(my_thing_mock.name).then_return_many(expected_results)
+
+    for expected in expected_results:
+        assert my_thing_mock.name == expected
+
+You can also provide the `loop=True` arg to make this behaviour loop through the list.
+
+
+Get Raise
+----------
+
+.. code-block:: python
+
+    with tmock(MyThing) as my_thing_mock:
+        when(my_thing_mock.name).then_raise(IOError)
+
+    my_thing_mock.name  # <- Error raised here.
+
+
