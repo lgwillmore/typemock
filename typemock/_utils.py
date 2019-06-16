@@ -1,7 +1,9 @@
 import inspect
 import logging
 from types import FunctionType
-from typing import List, Type, Dict
+from typing import List, Type, Dict, Optional, TypeVar
+
+T = TypeVar('T')
 
 
 class Blank:
@@ -91,3 +93,18 @@ def bind(instance, func, as_name=None):
 
 def typemock_logger():
     return logging.getLogger("typemock")
+
+
+def try_instantiate_class(cls: Type[T]) -> Optional[T]:
+    init_signature = inspect.getfullargspec(cls.__init__)
+    stub_args = tuple([None for _ in range(1, len(init_signature.args))])
+    try:
+        if len(stub_args) > 0:
+            return cls(*stub_args)
+        else:
+            return cls()
+    except Exception:
+        typemock_logger().warning(
+            "Could not instantiate instance of {}. Instance attributes will not be available for mocking".format(cls)
+        )
+        return None

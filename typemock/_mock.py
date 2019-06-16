@@ -5,7 +5,7 @@ from types import FunctionType
 from typing import TypeVar, Generic, Type, Callable, List, Tuple, Any, Dict, cast, Union, Optional
 
 from typemock._safety import validate_class_type_hints
-from typemock._utils import methods, bind, attributes, Blank, typemock_logger
+from typemock._utils import methods, bind, attributes, Blank, try_instantiate_class
 from typemock.api import MockTypeSafetyError, NoBehaviourSpecifiedError, ResponseBuilder, TypeSafety, MockingError
 from typemock.match import Matcher
 
@@ -307,21 +307,6 @@ class _MockAttributeState(Generic[R]):
         return CalledSetRecord(expected_call, count, other_count)
 
 
-def _instantiate_class(cls: Type[T]) -> Optional[T]:
-    init_signature = inspect.getfullargspec(cls.__init__)
-    stub_args = tuple([None for _ in range(1, len(init_signature.args))])
-    try:
-        if len(stub_args) > 0:
-            return cls(*stub_args)
-        else:
-            return cls()
-    except Exception:
-        typemock_logger().warning(
-            "Could not instantiate instance of {}. Instance attributes will not be available for mocking".format(cls)
-        )
-        return None
-
-
 class _MockObject(Generic[T], object):
 
     def __init__(self, mocked_thing: Union[Type[T], T], type_safety: TypeSafety):
@@ -330,7 +315,7 @@ class _MockObject(Generic[T], object):
             mocked_class: Type[T] = mocked_thing.__class__
         else:
             mocked_class: Type[T] = mocked_thing
-            mocked_instance: Optional[T] = _instantiate_class(mocked_thing)
+            mocked_instance: Optional[T] = try_instantiate_class(mocked_thing)
         validate_class_type_hints(mocked_class, type_safety)
         self._mocked_class = mocked_class
         self._mock_method_states: List[_MockMethodState] = []

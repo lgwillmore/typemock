@@ -11,12 +11,24 @@ class ClassWithNoResponseType:
 
 
 class ClassWithMultipleUnHintedThings:
-    a_hinted_attribute: str = "initial_hinted"
-    an_unhinted_attribute = "initial_not_hinted"
+    hinted_class_att: str = "initial_hinted"
+    unhinted_class_att = "initial_not_hinted"
+    class_att_with_init_hint = "default"
+    class_att_with_unhinted_init = "default2"
 
-    def __init__(self):
-        # We do not care about type hints for magic methods
-        pass
+    def __init__(
+            self,
+            class_att_with_init_hint: str,
+            class_att_with_unhinted_init,
+            instance_att_with_init_hint: str,
+            instance_att_with_unhinted_init
+    ):
+        self.class_att_with_init_hint = class_att_with_init_hint
+        self.class_att_with_unhinted_init = class_att_with_unhinted_init
+        self.instance_att_with_init_hint = instance_att_with_init_hint
+        self.instance_att_with_unhinted_init = instance_att_with_unhinted_init
+        self.instance_att_hinted_no_init: int = 0
+        self.instance_att_unhinted_no_init = bool
 
     def _some_private_function(self):
         # We do not care about type hints for private methods
@@ -55,9 +67,13 @@ class TestSafety(TestCase):
 
     def test_validate_class_type_hints__strict(self):
         expected_missing_type_hints = [
-            MissingHint(["an_unhinted_attribute"], MemberType.ATTRIBUTE),
-            MissingHint(["method_with_missing_arg_hint", "something"], MemberType.ARG),
-            MissingHint(["method_with_missing_return_type"], MemberType.RETURN),
+            MissingHint(['class_att_with_unhinted_init'], MemberType.ATTRIBUTE),
+            MissingHint(['unhinted_class_att'], MemberType.ATTRIBUTE),
+            MissingHint(['instance_att_hinted_no_init'], MemberType.ATTRIBUTE),
+            MissingHint(['instance_att_unhinted_no_init'], MemberType.ATTRIBUTE),
+            MissingHint(['instance_att_with_unhinted_init'], MemberType.ATTRIBUTE),
+            MissingHint(['method_with_missing_arg_hint', 'something'], MemberType.ARG),
+            MissingHint(['method_with_missing_return_type'], MemberType.RETURN)
         ]
 
         with self.assertRaises(MissingTypeHintsError) as error:
@@ -68,8 +84,12 @@ class TestSafety(TestCase):
 
     def test_validate_class_type_hints__no_return_is_none_return(self):
         expected_missing_type_hints = [
-            MissingHint(["an_unhinted_attribute"], MemberType.ATTRIBUTE),
-            MissingHint(["method_with_missing_arg_hint", "something"], MemberType.ARG),
+            MissingHint(['class_att_with_unhinted_init'], MemberType.ATTRIBUTE),
+            MissingHint(['unhinted_class_att'], MemberType.ATTRIBUTE),
+            MissingHint(['instance_att_hinted_no_init'], MemberType.ATTRIBUTE),
+            MissingHint(['instance_att_unhinted_no_init'], MemberType.ATTRIBUTE),
+            MissingHint(['instance_att_with_unhinted_init'], MemberType.ATTRIBUTE),
+            MissingHint(['method_with_missing_arg_hint', 'something'], MemberType.ARG),
         ]
 
         with self.assertRaises(MissingTypeHintsError) as error:

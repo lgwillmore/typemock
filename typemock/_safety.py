@@ -1,7 +1,7 @@
 import inspect
 from typing import List, Type, TypeVar
 
-from typemock._utils import methods, attributes, Blank
+from typemock._utils import methods, attributes, Blank, try_instantiate_class
 from typemock.api import MemberType, MissingHint, MissingTypeHintsError, TypeSafety
 
 T = TypeVar('T')
@@ -36,7 +36,7 @@ def _validate_method_annotations(clazz: Type[T], type_safety: TypeSafety, missin
 
 
 def _validate_attributes(clazz: Type[T], type_safety: TypeSafety, missing: List[MissingHint]):
-    for attribute_entry in attributes(clazz):
+    for attribute_entry in attributes(clazz, try_instantiate_class(clazz)):
         if attribute_entry.type_hint is Blank:
             missing.append(
                 MissingHint(
