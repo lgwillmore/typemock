@@ -1,4 +1,4 @@
-from typing import TypeVar, Type
+from typing import TypeVar, Type, Union
 
 from typemock._mock import (
     _tmock,
@@ -11,7 +11,7 @@ T = TypeVar('T')
 R = TypeVar('R')
 
 
-def tmock(clazz: Type[T], type_safety: TypeSafety = TypeSafety.STRICT) -> T:
+def tmock(clazz: Union[Type[T], T], type_safety: TypeSafety = TypeSafety.STRICT) -> T:
     return _tmock(clazz=clazz, type_safety=type_safety)
 
 

@@ -2,10 +2,10 @@ import inspect
 from abc import ABC, abstractmethod
 from inspect import Signature
 from types import FunctionType
-from typing import TypeVar, Generic, Type, Callable, List, Tuple, Any, Dict, cast
+from typing import TypeVar, Generic, Type, Callable, List, Tuple, Any, Dict, cast, Union, Optional
 
 from typemock._safety import validate_class_type_hints
-from typemock._utils import methods, bind, attributes, Blank
+from typemock._utils import methods, bind, attributes, Blank, typemock_logger
 from typemock.api import MockTypeSafetyError, NoBehaviourSpecifiedError, ResponseBuilder, TypeSafety, MockingError
 from typemock.match import Matcher
 
@@ -307,9 +307,30 @@ class _MockAttributeState(Generic[R]):
         return CalledSetRecord(expected_call, count, other_count)
 
 
+def _instantiate_class(cls: Type[T]) -> Optional[T]:
+    init_signature = inspect.getfullargspec(cls.__init__)
+    stub_args = tuple([None for _ in range(1, len(init_signature.args))])
+    try:
+        if len(stub_args) > 0:
+            return cls(*stub_args)
+        else:
+            return cls()
+    except Exception:
+        typemock_logger().warning(
+            "Could not instantiate instance of {}. Instance attributes will not be available for mocking".format(cls)
+        )
+        return None
+
+
 class _MockObject(Generic[T], object):
 
-    def __init__(self, mocked_class: Type[T], type_safety: TypeSafety):
+    def __init__(self, mocked_thing: Union[Type[T], T], type_safety: TypeSafety):
+        if not inspect.isclass(mocked_thing):
+            mocked_instance: Optional[T] = mocked_thing
+            mocked_class: Type[T] = mocked_thing.__class__
+        else:
+            mocked_class: Type[T] = mocked_thing
+            mocked_instance: Optional[T] = _instantiate_class(mocked_thing)
         validate_class_type_hints(mocked_class, type_safety)
         self._mocked_class = mocked_class
         self._mock_method_states: List[_MockMethodState] = []
@@ -330,7 +351,7 @@ class _MockObject(Generic[T], object):
             bind(self, mock_method, func_entry.name)
 
         # Set up attribute mocks
-        attributes_entries = attributes(mocked_class)
+        attributes_entries = attributes(mocked_class, mocked_instance)
         for attribute_entry in attributes_entries:
             attribute_state = _MockAttributeState(
                 name=attribute_entry.name,
@@ -369,7 +390,7 @@ class _MockObject(Generic[T], object):
     def __class__(self):
         return self._mocked_class
 
-    def __enter__(self):
+    def __enter__(self) -> T:
         self._open = True
         for method_state in self._mock_method_states:
             method_state.open_for_setup()
@@ -416,7 +437,7 @@ class _AttributeResponseBuilder(Generic[R], ResponseBuilder[R]):
         self._attribute_state.set_response_many(results, loop)
 
 
-def _tmock(clazz: Type[T], type_safety: TypeSafety = TypeSafety.STRICT) -> T:
+def _tmock(clazz: Union[Type[T], T], type_safety: TypeSafety = TypeSafety.STRICT) -> T:
     """
     Mocks a given class.
 

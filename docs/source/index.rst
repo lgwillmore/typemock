@@ -36,6 +36,7 @@ Used in conjunction with mypy, this should result in much more high fidelity ind
    :maxdepth: 2
 
    quick_intro
+   installation
    type_safety
    mocking_objects
    verifying

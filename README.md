@@ -28,6 +28,10 @@ But, now we have type hints. And so, we can explicitly define the contracts of o
 
 Used in conjunction with mypy, this should result in much more high fidelity independent tests.
 
+## Installation
+
+    pip install typemock
+
 ## Quick Example Usage
 
 Given some class (the implementation of its method is not relevant)

@@ -1,6 +1,7 @@
 import inspect
+import logging
 from types import FunctionType
-from typing import List, Type
+from typing import List, Type, Dict
 
 
 class Blank:
@@ -49,21 +50,35 @@ def methods(cls, include_private=False) -> List[FunctionEntry]:
     return function_entries
 
 
-def attributes(cls) -> List[AttributeEntry]:
-    entries = []
+def attributes(cls, instance=None) -> List[AttributeEntry]:
+    entries: Dict[str, AttributeEntry] = {}
     annotations = cls.__dict__.get("__annotations__", {})
-    attributes = inspect.getmembers(cls, lambda a: not (inspect.isroutine(a)))
-    attributes = [a for a in attributes if not _is_magic(a[0]) and not _is_private(a[0])]
-    for attribute in attributes:
-        type_hint = annotations.get(attribute[0], Blank)
-        entries.append(
-            AttributeEntry(
-                name=attribute[0],
+    init_signature = inspect.getfullargspec(cls.__init__)
+    class_attributes = inspect.getmembers(cls, lambda a: not (inspect.isroutine(a)))
+    class_attributes = [a for a in class_attributes if not _is_magic(a[0]) and not _is_private(a[0])]
+    for attribute in class_attributes:
+        name = attribute[0]
+        type_hint = annotations.get(name, init_signature.annotations.get(name, Blank))
+        entries[name] = AttributeEntry(
+            name=name,
+            initial_value=attribute[1],
+            type_hint=type_hint
+        )
+    instance_attributes = inspect.getmembers(instance, lambda a: not (inspect.isroutine(a)))
+    instance_attributes = [a for a in instance_attributes if not _is_magic(a[0]) and not _is_private(a[0])]
+    for attribute in instance_attributes:
+        name = attribute[0]
+        if name in entries:
+            pass
+        else:
+            type_hint = init_signature.annotations.get(attribute[0], Blank)
+            entries[name] = AttributeEntry(
+                name=name,
                 initial_value=attribute[1],
                 type_hint=type_hint
             )
-        )
-    return entries
+
+    return list(entries.values())
 
 
 def bind(instance, func, as_name=None):
@@ -72,3 +87,7 @@ def bind(instance, func, as_name=None):
     bound_method = func.__get__(instance, instance.__class__)
     setattr(instance, as_name, bound_method)
     return bound_method
+
+
+def typemock_logger():
+    return logging.getLogger("typemock")
