@@ -87,20 +87,9 @@ We get an informative error such as
 
 Things to note:
 
- - You can only mock objects which have fully type hinted interfaces. You will get Type hint errors otherwise.
+ - By default you can only mock objects which have fully type hinted interfaces. You will get Type hint errors otherwise. This can be relaxed with the `type_safety` arg.
  - You will also get type hint errors if you attempt to specify behaviour that returns the incorrect type.
 
-
-## Still to do
-
- - Mock properties.
- - Mock classes and instances of classes (currently only classes expected)
- - Check/implement more complex type safety (nested objects)
- - More behaviour specifications (Programmatic responses)
- - Better docs and examples
- - Mock functions?
- - Play nicely with patching static variables in classes and modules?
- - Run mypy linter on typemock codebase.
 
 
 
