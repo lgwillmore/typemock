@@ -22,7 +22,7 @@ copyright = '2019, Laurence Willmore'
 author = 'Laurence Willmore'
 
 # The full version, including alpha/beta/rc tags
-release = '0.3.3'
+release = '0.3.5'
 
 
 # -- General configuration ---------------------------------------------------
