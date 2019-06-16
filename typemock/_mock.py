@@ -311,11 +311,11 @@ class _MockObject(Generic[T], object):
 
     def __init__(self, mocked_thing: Union[Type[T], T], type_safety: TypeSafety):
         if not inspect.isclass(mocked_thing):
-            mocked_instance: Optional[T] = mocked_thing
-            mocked_class: Type[T] = mocked_thing.__class__
+            mocked_instance: T = cast(T, mocked_thing)
+            mocked_class: Type[T] = cast(Type[T], mocked_thing.__class__)
         else:
-            mocked_class: Type[T] = mocked_thing
-            mocked_instance: Optional[T] = try_instantiate_class(mocked_thing)
+            mocked_class = mocked_thing  # type: ignore
+            mocked_instance: Optional[T] = try_instantiate_class(cast(Type[T], mocked_thing))  # type: ignore
         validate_class_type_hints(
             clazz=mocked_class,
             instance=mocked_instance,
@@ -382,7 +382,7 @@ class _MockObject(Generic[T], object):
         self._open = True
         for method_state in self._mock_method_states:
             method_state.open_for_setup()
-        return self
+        return cast(T, self)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self._open = False

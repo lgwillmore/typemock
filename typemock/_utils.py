@@ -100,7 +100,7 @@ def try_instantiate_class(cls: Type[T]) -> Optional[T]:
     stub_args = tuple([None for _ in range(1, len(init_signature.args))])
     try:
         if len(stub_args) > 0:
-            return cls(*stub_args)
+            return cls(*stub_args)  # type: ignore
         else:
             return cls()
     except Exception:
