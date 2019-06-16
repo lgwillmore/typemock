@@ -65,11 +65,6 @@ verify(my_thing_mock).multiple_arg("p", 1)
 
 ```
 
-Things to note:
-
- - The mocked object must be used as a context manager in order to specify behaviour.
- - You must let the context close in order to use the defined behaviour.
-
 ### Type safety
 
 And when we try to specify behaviour that does not conform to the contract of the object we are mocking
@@ -85,10 +80,6 @@ We get an informative error such as
 
     typemock.safety.MockTypeSafetyError: Method: multiple_arg Arg: number must be of type:<class 'int'>
 
-Things to note:
-
- - By default you can only mock objects which have fully type hinted interfaces. You will get Type hint errors otherwise. This can be relaxed with the `type_safety` arg.
- - You will also get type hint errors if you attempt to specify behaviour that returns the incorrect type.
 
 
 
