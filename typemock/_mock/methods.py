@@ -3,8 +3,8 @@ from inspect import Signature
 from types import FunctionType
 from typing import Tuple, Any, Generic, Dict, List, Callable, TypeVar
 
-from typemock._mock.responders import Responder, ResponderBasic, ResponderMany, ResponderRaise
-from typemock.api import MockTypeSafetyError, NoBehaviourSpecifiedError
+from typemock._mock.responders import Responder, ResponderBasic, ResponderMany, ResponderRaise, ResponderDo
+from typemock.api import MockTypeSafetyError, NoBehaviourSpecifiedError, DoFunction
 from typemock.api import TypeSafety, ResponseBuilder
 from typemock.match import Matcher
 
@@ -167,6 +167,14 @@ class MockMethodState(Generic[R]):
         else:
             self._responses[key] = ResponderRaise(error)
 
+    def set_response_do(self, do_function: DoFunction, *args, **kwargs):
+        key = self._ordered_call(*args, **kwargs)
+        self._check_key_type_safety(key)
+        if has_matchers(key):
+            self._matcher_responses[key] = ResponderDo(do_function, self._ordered_call)
+        else:
+            self._responses[key] = ResponderDo(do_function, self._ordered_call)
+
     def open_for_setup(self):
         self._open = True
 
@@ -227,3 +235,6 @@ class MethodResponseBuilder(Generic[R], ResponseBuilder[R]):
 
     def then_return_many(self, results: List[R], loop: bool = False) -> None:
         self._method_state.set_response_many(results, loop, *self._args, **self._kwargs)
+
+    def then_do(self, do_function: DoFunction) -> None:
+        self._method_state.set_response_do(do_function, *self._args, **self._kwargs)

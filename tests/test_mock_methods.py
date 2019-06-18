@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from typemock import tmock, when, verify
+from typemock import tmock, when, verify, match
 from typemock.api import NoBehaviourSpecifiedError
 
 
@@ -28,14 +28,14 @@ class TestBasicMethodMocking(TestCase):
 
     def test_mock__isinstance_of_mocked_class(self):
         for mocked_thing in mocked_things:
-            with self.subTest():
+            with self.subTest("{}".format(mocked_thing)):
                 my_thing_mock = tmock(mocked_thing)
 
                 self.assertIsInstance(my_thing_mock, MyThing)
 
     def test_mock__can_mock_method__no_args__returns(self):
         for mocked_thing in mocked_things:
-            with self.subTest():
+            with self.subTest("{}".format(mocked_thing)):
                 expected_result = "a string"
 
                 with tmock(mocked_thing) as my_thing_mock:
@@ -48,7 +48,7 @@ class TestBasicMethodMocking(TestCase):
 
     def test_mock__unmocked_method__NoBehaviourError(self):
         for mocked_thing in mocked_things:
-            with self.subTest():
+            with self.subTest("{}".format(mocked_thing)):
                 my_thing_mock: MyThing = tmock(mocked_thing)
 
                 with self.assertRaises(NoBehaviourSpecifiedError):
@@ -56,7 +56,7 @@ class TestBasicMethodMocking(TestCase):
 
     def test_mock__try_to_mock_method_out_of_context(self):
         for mocked_thing in mocked_things:
-            with self.subTest():
+            with self.subTest("{}".format(mocked_thing)):
                 my_thing_mock: MyThing = tmock(mocked_thing)
 
                 with self.assertRaises(NoBehaviourSpecifiedError):
@@ -64,7 +64,7 @@ class TestBasicMethodMocking(TestCase):
 
     def test_mock__can_mock_method__arg__returns(self):
         for mocked_thing in mocked_things:
-            with self.subTest():
+            with self.subTest("{}".format(mocked_thing)):
                 expected_result = "a string"
 
                 with tmock(mocked_thing) as my_thing_mock:
@@ -77,7 +77,7 @@ class TestBasicMethodMocking(TestCase):
 
     def test_mock__can_mock_method__multiple_args__returns(self):
         for mocked_thing in mocked_things:
-            with self.subTest():
+            with self.subTest("{}".format(mocked_thing)):
                 expected_result = "a string"
 
                 with tmock(mocked_thing) as my_thing_mock:
@@ -90,7 +90,7 @@ class TestBasicMethodMocking(TestCase):
 
     def test_mock__can_mock_method__multiple_args__mixed_with_kwargs_in_usage(self):
         for mocked_thing in mocked_things:
-            with self.subTest():
+            with self.subTest("{}".format(mocked_thing)):
                 expected_result = "a string"
 
                 with tmock(mocked_thing) as my_thing_mock:
@@ -106,7 +106,7 @@ class TestBasicMethodMocking(TestCase):
 
     def test_mock__can_mock_method__multiple_args__mixed_with_kwargs_in_setup(self):
         for mocked_thing in mocked_things:
-            with self.subTest():
+            with self.subTest("{}".format(mocked_thing)):
                 expected_result = "a string"
 
                 with tmock(mocked_thing) as my_thing_mock:
@@ -119,7 +119,7 @@ class TestBasicMethodMocking(TestCase):
 
     def test_mock__can_mock_method__default_args(self):
         for mocked_thing in mocked_things:
-            with self.subTest():
+            with self.subTest("{}".format(mocked_thing)):
                 with tmock(mocked_thing) as my_thing_mock:
                     when(my_thing_mock.method_with_default_args(first_number=1)).then_return(None)
 
@@ -129,7 +129,7 @@ class TestBasicMethodMocking(TestCase):
 
     def test_mock__can_mock_method__no_args__no_return(self):
         for mocked_thing in mocked_things:
-            with self.subTest():
+            with self.subTest("{}".format(mocked_thing)):
                 with tmock(mocked_thing) as my_thing_mock:
                     when(my_thing_mock.do_something_with_side_effects()).then_return(None)
 
@@ -139,7 +139,7 @@ class TestBasicMethodMocking(TestCase):
 
     def test_mock__then_raise(self):
         for mocked_thing in mocked_things:
-            with self.subTest():
+            with self.subTest("{}".format(mocked_thing)):
                 expected_error = IOError()
 
                 with tmock(mocked_thing) as my_thing_mock:
@@ -155,7 +155,7 @@ class TestBasicMethodMocking(TestCase):
         ]
 
         for mocked_thing in mocked_things:
-            with self.subTest():
+            with self.subTest("{}".format(mocked_thing)):
 
                 with tmock(mocked_thing) as my_thing_mock:
                     when(my_thing_mock.return_a_str()).then_return_many(expected_responses, False)
@@ -175,7 +175,7 @@ class TestBasicMethodMocking(TestCase):
         ]
 
         for mocked_thing in mocked_things:
-            with self.subTest():
+            with self.subTest("{}".format(mocked_thing)):
                 with tmock(mocked_thing) as my_thing_mock:
                     when(my_thing_mock.return_a_str()).then_return_many(expected_responses, True)
 
@@ -183,5 +183,23 @@ class TestBasicMethodMocking(TestCase):
                     for expected in expected_responses:
                         actual = my_thing_mock.return_a_str()
                         self.assertEqual(expected, actual)
+
+    def test_mock__then_do(self):
+
+        expected_arg = 1
+
+        def bounce_back_handler(*args):
+            assert args[0] == expected_arg
+            return "{}".format(args[0])
+
+        for mocked_thing in mocked_things:
+            with self.subTest("{}".format(mocked_thing)):
+
+                with tmock(mocked_thing) as my_thing_mock:
+                    when(my_thing_mock.convert_int_to_str(match.anything())).then_do(bounce_back_handler)
+
+            actual = my_thing_mock.convert_int_to_str(expected_arg)
+
+            self.assertEqual("1", actual)
 
 # TODO: We can still mock a context object - idea: setup can only happen on_first - successive contexts revert.

@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
-from typing import Generic, List, TypeVar
+from typing import Generic, List, TypeVar, Callable, Any, Tuple
 
-from typemock.api import NoBehaviourSpecifiedError
+from typemock.api import NoBehaviourSpecifiedError, DoFunction
 
 T = TypeVar('T')
 R = TypeVar('R')
@@ -51,3 +51,15 @@ class ResponderMany(Generic[R], Responder[R]):
         response = self._responses[self._index]
         self._index += 1
         return response
+
+
+class ResponderDo(Generic[R], Responder[R]):
+
+    def __init__(self, do_function: DoFunction, ordered_call: Callable[..., Tuple[Tuple[str, Any], ...]]):
+        self._ordered_call = ordered_call
+        self._do_function = do_function
+
+    def response(self, *args, **kwargs) -> R:
+        call = self._ordered_call(*args, **kwargs)
+        values = tuple([value for key, value in call])
+        return self._do_function(*values)

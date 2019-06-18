@@ -39,7 +39,7 @@ class TestBasicClassAttributeMocking(TestCase):
 
                 self.assertEqual(expected, actual)
 
-    def test_mock__class_attribute__get__multiple(self):
+    def test_mock__class_attribute__get__many(self):
         expected_responses = [
             3,
             4
@@ -65,6 +65,21 @@ class TestBasicClassAttributeMocking(TestCase):
 
                 with self.assertRaises(IOError):
                     my_thing_mock.class_att_with_type
+
+    def test_mock__class_attribute__get__then_do(self):
+        expected = 3
+
+        def handle_get():
+            return expected
+
+        for mocked_thing in mocked_things:
+            with self.subTest():
+                with tmock(mocked_thing) as my_thing_mock:
+                    when(my_thing_mock.class_att_with_type).then_do(handle_get)
+
+                actual = my_thing_mock.class_att_with_type
+
+                self.assertEqual(expected, actual)
 
     def test_mock__class_attribute__get__no_behaviour(self):
         for mocked_thing in mocked_things:
