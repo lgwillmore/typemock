@@ -6,7 +6,6 @@ Type safe mocking for python 3.
 
 1. [Motivation](#motivation)
 2. [Quick example usage](#quick-example-usage)
-3. [Still to do](#still-to-do)
 
 **NOTE: This library is still in Alpha. Its API and implementation could change.**
 

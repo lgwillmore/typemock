@@ -1,8 +1,8 @@
-from typing import Any, Generic, Type, List, TypeVar
+from typing import Any, Generic, Type, List, TypeVar, Tuple
 
-from typemock._mock.responders import Responder, ResponderBasic, ResponderMany, ResponderRaise
+from typemock._mock.responders import Responder, ResponderBasic, ResponderMany, ResponderRaise, ResponderDo
 from typemock._utils import Blank
-from typemock.api import MockTypeSafetyError
+from typemock.api import MockTypeSafetyError, DoFunction
 from typemock.api import ResponseBuilder
 
 T = TypeVar('T')
@@ -15,6 +15,10 @@ class CalledSetRecord:
         self.call = call
         self.count = count
         self.other_call_count = other_call_count
+
+
+def _null_ordered_call(*args, **kwargs) -> Tuple[Tuple[str, Any], ...]:
+    return tuple([])
 
 
 class MockAttributeState(Generic[R]):
@@ -46,9 +50,14 @@ class MockAttributeState(Generic[R]):
     def set_error_response(self, error: Exception):
         self._responder = ResponderRaise(error)
 
+    def set_response_do(self, do_function: DoFunction):
+        self._responder = ResponderDo(do_function, _null_ordered_call)
+
     def response(self) -> R:
         self._call_count += 1
-        return self._responder.response()
+        r = self._responder.response()
+        self._validate_return(r)
+        return r
 
     def call_count_gets(self) -> int:
         return self._call_count
@@ -82,3 +91,6 @@ class AttributeResponseBuilder(Generic[R], ResponseBuilder[R]):
 
     def then_return_many(self, results: List[R], loop: bool = False) -> None:
         self._attribute_state.set_response_many(results, loop)
+
+    def then_do(self, do_function: DoFunction) -> None:
+        self._attribute_state.set_response_do(do_function)

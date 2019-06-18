@@ -1,9 +1,11 @@
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import TypeVar, List, Generic
+from typing import TypeVar, List, Generic, Callable
 
 T = TypeVar('T')
 R = TypeVar('R')
+
+DoFunction = Callable[..., R]
 
 
 class ResponseBuilder(ABC, Generic[R]):
@@ -42,6 +44,24 @@ class ResponseBuilder(ABC, Generic[R]):
 
                 If False, an error will be raised when responses are exhausted. If True, responses will start from
                 first response again.
+
+        """
+
+    @abstractmethod
+    def then_do(self, do_function: DoFunction) -> None:
+        """
+        Sets the behaviour of the mock to return the result of calling the do_function with the args provided.
+
+        Args:
+
+            do_function:
+
+        Returns:
+
+            result:
+
+                Returns whatever he do_function returns.
+                This will be type checked to see that it matches the return type that it is mocking.
 
         """
 
