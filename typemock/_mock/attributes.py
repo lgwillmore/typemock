@@ -55,7 +55,9 @@ class MockAttributeState(Generic[R]):
 
     def response(self) -> R:
         self._call_count += 1
-        return self._responder.response()
+        r = self._responder.response()
+        self._validate_return(r)
+        return r
 
     def call_count_gets(self) -> int:
         return self._call_count

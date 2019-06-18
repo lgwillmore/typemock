@@ -143,6 +143,25 @@ class TestSafety(TestCase):
                     with tmock(MyThing, type_safety=type_safety) as my_thing_mock:
                         when(my_thing_mock.a_hinted_str_attribute).then_return(1)
 
+    def test_try_to_specify_non_type_safe_return_type__simple_type_then_do(self):
+
+        def do_return(*args):
+            return 1
+
+        for type_safety in TypeSafety:
+            with self.subTest():
+                # Method
+                with self.assertRaises(MockTypeSafetyError):
+                    with tmock(MyThing, type_safety=type_safety) as my_thing_mock:
+                        when(my_thing_mock.convert_int_to_str(1)).then_do(do_return)
+                    my_thing_mock.convert_int_to_str(1)
+
+                # Attribute get
+                with self.assertRaises(MockTypeSafetyError):
+                    with tmock(MyThing, type_safety=type_safety) as my_thing_mock:
+                        when(my_thing_mock.a_hinted_str_attribute).then_do(do_return)
+                    my_thing_mock.a_hinted_str_attribute
+
     def test_try_to_specify_non_type_safe_return_type__simple_type__return_many(self):
         for type_safety in TypeSafety:
             with self.subTest():
@@ -175,7 +194,7 @@ class TestTypeSafetyRelaxed(TestCase):
 
 class TestTypeSafetyNoResponseIsNone(TestCase):
 
-    def test_specify_return_to_be_Nonewhen_missing(self):
+    def test_specify_return_to_be_None_when_missing(self):
         with tmock(ClassWithNoResponseType, type_safety=TypeSafety.NO_RETURN_IS_NONE_RETURN) as my_mock:
             when(my_mock.method_with_missing_return_type()).then_return(None)
 

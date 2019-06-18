@@ -89,12 +89,16 @@ class MockMethodState(Generic[R]):
         key = self._ordered_call(*args, **kwargs)
         self._call_record.append(key)
         if key in self._responses:
-            return self._responses[key].response(*args, **kwargs)
+            r = self._responses[key].response(*args, **kwargs)
+            self._validate_return(r)
+            return r
         else:
             for matcher_key, responder in self._matcher_responses.items():
                 if matcher_key == key:
                     self._check_key_type_safety(key)
-                    return responder.response(*args, **kwargs)
+                    r = responder.response(*args, **kwargs)
+                    self._validate_return(r)
+                    return r
             raise NoBehaviourSpecifiedError(
                 "No behaviour specified for method: {} with args: {}".format(self.name, key)
             )
