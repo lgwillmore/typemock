@@ -137,7 +137,7 @@ def methods(cls, include_private=False) -> List[FunctionEntry]:
 
 def _type_hint_for_attribute_from_value(current_hint, value) -> Any:
     if isinstance(value, property):
-        return typing.get_type_hints(value.fget)["return"]
+        return typing.get_type_hints(value.fget).get("return", current_hint)
     else:
         return current_hint
 
