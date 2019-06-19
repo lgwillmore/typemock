@@ -110,6 +110,21 @@ We can specify a series of responses for successive calls to a method with the s
 
 By default, if we interact with the method more than the specified series, we will get an error. But you can set this to looping with the `loop` parameter for `then_return_many` responder.
 
+Programmatic response
+---------------------
+
+You can provide dynamic responses through a function handler. The function has access to the call arguments through var args.
+
+.. code-block:: python
+
+    def bounce_back_handler(*args):
+        return "{}".format(args[0])
+
+    with tmock(MyThing) as my_thing_mock:
+        when(my_thing_mock.convert_int_to_str(1)).then_do(bounce_back_handler)
+
+    assert "1" == my_thing_mock.convert_int_to_str(1)
+
 Error responses
 ---------------
 
