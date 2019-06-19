@@ -1,3 +1,4 @@
+from typing import Dict, Any, List
 from unittest import TestCase
 
 from typemock import tmock, when, verify, match
@@ -18,6 +19,13 @@ class MyThing:
         pass
 
     def method_with_default_args(self, first_number: int, second_string: str = "default") -> None:
+        pass
+
+    def method_with_complex_args_and_return(
+            self,
+            list_arg: List[str],
+            dict_arg: Dict[str, int]
+    ) -> Dict[str, Any]:
         pass
 
 
@@ -87,6 +95,28 @@ class TestBasicMethodMocking(TestCase):
 
                 self.assertEqual(expected_result, actual)
                 verify(my_thing_mock).multiple_arg("p", 1)
+
+    def test_mock__can_mock_method__complex_args_and_return__returns(self):
+        for mocked_thing in mocked_things:
+            with self.subTest("{}".format(mocked_thing)):
+                expected_result = {"my_key": True}
+
+                with tmock(mocked_thing) as my_thing_mock:
+                    when(my_thing_mock.method_with_complex_args_and_return(
+                        list_arg=["hello"],
+                        dict_arg={"foo": False}
+                    )).then_return(expected_result)
+
+                actual = my_thing_mock.method_with_complex_args_and_return(
+                    list_arg=["hello"],
+                    dict_arg={"foo": False}
+                )
+
+                self.assertEqual(expected_result, actual)
+                verify(my_thing_mock).method_with_complex_args_and_return(
+                    list_arg=["hello"],
+                    dict_arg={"foo": False}
+                )
 
     def test_mock__can_mock_method__multiple_args__mixed_with_kwargs_in_usage(self):
         for mocked_thing in mocked_things:
@@ -194,7 +224,6 @@ class TestBasicMethodMocking(TestCase):
 
         for mocked_thing in mocked_things:
             with self.subTest("{}".format(mocked_thing)):
-
                 with tmock(mocked_thing) as my_thing_mock:
                     when(my_thing_mock.convert_int_to_str(match.anything())).then_do(bounce_back_handler)
 

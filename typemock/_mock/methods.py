@@ -4,6 +4,7 @@ from types import FunctionType
 from typing import Tuple, Any, Generic, Dict, List, Callable, TypeVar
 
 from typemock._mock.responders import Responder, ResponderBasic, ResponderMany, ResponderRaise, ResponderDo
+from typemock._utils import is_type, InefficientUnHashableKeyDict
 from typemock.api import MockTypeSafetyError, NoBehaviourSpecifiedError, DoFunction
 from typemock.api import TypeSafety, ResponseBuilder
 from typemock.match import Matcher
@@ -42,8 +43,9 @@ class MockMethodState(Generic[R]):
         self.func = func
         self._signature = signature
         self._type_safety = type_safety
-        self._responses: Dict[OrderedCallValues, Responder] = {}
-        self._matcher_responses: Dict[OrderedCallValues, Responder] = {}
+        self._responses: InefficientUnHashableKeyDict[OrderedCallValues, Responder] = InefficientUnHashableKeyDict()
+        self._matcher_responses: InefficientUnHashableKeyDict[
+            OrderedCallValues, Responder] = InefficientUnHashableKeyDict()
         self._open = False
         self._arg_index_to_arg_name: Dict[int, str] = {}
         self._arg_name_to_parameter: Dict[str, inspect.Parameter] = {}
@@ -83,6 +85,7 @@ class MockMethodState(Generic[R]):
             )
             ordered_key_values.append((name, value))
         ordered_call = tuple(ordered_key_values)
+        self._check_key_type_safety(ordered_call)
         return ordered_call
 
     def response_for(self, *args, **kwargs) -> R:
@@ -138,15 +141,20 @@ class MockMethodState(Generic[R]):
                             self.name,
                             return_type,
                         ))
-                elif not isinstance(response, return_type):
+                elif not is_type(response, return_type):
                     raise MockTypeSafetyError("Method: {} return must be of type:{}".format(
                         self.name,
                         return_type,
                     ))
 
+    def _set_key_to_responder(self, key: OrderedCallValues, responder: Responder):
+        if has_matchers(key):
+            self._matcher_responses[key] = responder
+        else:
+            self._responses[key] = responder
+
     def set_response(self, response: R, *args, **kwargs):
         key = self._ordered_call(*args, **kwargs)
-        self._check_key_type_safety(key)
         self._validate_return(response)
         if has_matchers(key):
             self._matcher_responses[key] = ResponderBasic(response)
@@ -155,29 +163,17 @@ class MockMethodState(Generic[R]):
 
     def set_response_many(self, results: List[R], loop: bool, *args, **kwargs):
         key = self._ordered_call(*args, **kwargs)
-        self._check_key_type_safety(key)
         for response in results:
             self._validate_return(response)
-        if has_matchers(key):
-            self._matcher_responses[key] = ResponderMany(results, loop)
-        else:
-            self._responses[key] = ResponderMany(results, loop)
+        self._set_key_to_responder(key, ResponderMany(results, loop))
 
     def set_error_response(self, error: Exception, *args, **kwargs):
         key = self._ordered_call(*args, **kwargs)
-        self._check_key_type_safety(key)
-        if has_matchers(key):
-            self._matcher_responses[key] = ResponderRaise(error)
-        else:
-            self._responses[key] = ResponderRaise(error)
+        self._set_key_to_responder(key, ResponderRaise(error))
 
     def set_response_do(self, do_function: DoFunction, *args, **kwargs):
         key = self._ordered_call(*args, **kwargs)
-        self._check_key_type_safety(key)
-        if has_matchers(key):
-            self._matcher_responses[key] = ResponderDo(do_function, self._ordered_call)
-        else:
-            self._responses[key] = ResponderDo(do_function, self._ordered_call)
+        self._set_key_to_responder(key, ResponderDo(do_function, self._ordered_call))
 
     def open_for_setup(self):
         self._open = True
@@ -197,7 +193,7 @@ class MockMethodState(Generic[R]):
                 continue
             if arg_name in func_annotations:
                 arg_type = func_annotations[arg_name]
-                if not isinstance(arg_value, arg_type):
+                if not is_type(arg_value, arg_type):
                     raise MockTypeSafetyError("Method: {} Arg: {} must be of type:{}".format(
                         self.name,
                         arg_name,

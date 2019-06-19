@@ -5,7 +5,12 @@ import typing
 from types import FunctionType
 from typing import List, Type, Dict, Optional, TypeVar, Union, Any
 
+from typeguard import check_type  # type: ignore
+
 T = TypeVar('T')
+
+K = TypeVar('K')
+V = TypeVar('V')
 
 
 class Blank:
@@ -200,3 +205,56 @@ def try_instantiate_class(cls: Type[T]) -> Optional[T]:
             "Could not instantiate instance of {}. Instance attributes will not be available for mocking".format(cls)
         )
         return None
+
+
+def is_type(value: Any, expected_type: Any) -> bool:
+    try:
+        check_type(
+            argname="nothing",
+            value=value,
+            expected_type=expected_type
+        )
+        return True
+    except TypeError:
+        return False
+
+
+class InefficientUnHashableKeyDict(typing.Generic[K, V]):
+
+    def __init__(self):
+        self._backing_keys: List[Any] = []
+        self._backing_values: List[Any] = []
+
+    def __setitem__(self, key: K, value: V):
+        self._remove_key(key)
+        self._add(key, value)
+
+    def __getitem__(self, key: K) -> V:
+        for i in range(len(self._backing_keys)):
+            possible = self._backing_keys[i]
+            if key == possible:
+                return self._backing_values[i]
+        raise KeyError(key)
+
+    def __iter__(self):
+        return self._backing_keys.__iter__()
+
+    def _remove_key(self, key: K):
+        for i in range(len(self._backing_keys)):
+            possible = self._backing_keys[i]
+            if key == possible:
+                del self._backing_keys[i]
+                del self._backing_values[i]
+
+    def _add(self, key, value):
+        self._backing_keys.append(key)
+        self._backing_values.append(value)
+
+    def get(self, key: K, default: V):
+        try:
+            return self.__getitem__(key)
+        except KeyError:
+            return default
+
+    def items(self):
+        return zip(self._backing_keys, self._backing_values).__iter__()
