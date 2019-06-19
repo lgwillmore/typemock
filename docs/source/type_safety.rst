@@ -41,10 +41,6 @@ Lets look at an example.
 
     class ClassWithMultipleUnHintedThings:
 
-        def __init__(self, some_init_arg):
-            # We do not care about type hints for magic methods
-            pass
-
         def _some_private_function(self):
             # We do not care about type hints for private methods
             pass

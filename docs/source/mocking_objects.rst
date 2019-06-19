@@ -282,3 +282,49 @@ Get Raise
     my_thing_mock.name  # <- Error raised here.
 
 
+
+Set Raise
+----------
+
+As with any `get` interactions, you can also mock the behaviour or `set` interactions. While the response behaviours do not make much sense for a `set`, an error behaviour is conceivable.
+
+.. code-block:: python
+
+    with tmock(MyThing) as my_thing_mock:
+        when(my_thing_mock.name = "new name").then_raise(IOError)
+
+    my_thing_mock.name = "new name" # <- Error raised here.
+
+Get programmatic response
+-------------------------
+
+As with methods, you can provide dynamic responses through a function handler. And although the handler needs to take a single vararg parameter, in the case of a `get` interaction, this will be empty.
+
+It might be useful if you do want to wire up some stateful mocking/faking though.
+
+.. code-block:: python
+
+    def name_get_handler(*args):
+        return "my name"
+
+    with tmock(MyThing) as my_thing_mock:
+        when(my_thing_mock.name).then_do(name_get_handler)
+
+    assert "my name" == my_thing_mock.name
+
+Set programmatic response
+-------------------------
+
+Again, you can provide dynamic responses through a function handler, for `set` interactions, and it must take a single vararg parameter. However, this will only have a single member for the value being set.
+
+As with programmatic `get` it might be useful if you do want to wire up some stateful mocking/faking.
+
+.. code-block:: python
+
+    def name_set_handler(*args):
+        print("My name is now {}".format(args[0]))
+
+    with tmock(MyThing) as my_thing_mock:
+        when(my_thing_mock.name = match.anything()).then_do(name_set_handler)
+
+    my_thing_mock.name = "new name" # <- prints the new name.
