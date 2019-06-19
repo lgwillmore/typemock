@@ -1,11 +1,14 @@
+from typing import List
 from unittest import TestCase
 
 from typemock import tmock, when
 
 
 class MyThing:
+    _private_att = None  # <- dont care
     class_att_with_type: int = 1  # <- typed, easy
     class_att_with_typed_init = "bar"  # <- type determined from __init__ annotation.
+    generic_att: List[str] = []
 
     def __init__(
             self,
@@ -42,6 +45,18 @@ class TestBasicClassAttributeMocking(TestCase):
                     when(my_thing_mock.class_att_with_type).then_return(expected)
 
                 actual = my_thing_mock.class_att_with_type
+
+                self.assertEqual(expected, actual)
+
+    def test_mock__generic_attribute__get__simple_return(self):
+        for mocked_thing in mocked_things:
+            with self.subTest():
+                expected = ["hello"]
+
+                with tmock(mocked_thing) as my_thing_mock:
+                    when(my_thing_mock.generic_att).then_return(expected)
+
+                actual = my_thing_mock.generic_att
 
                 self.assertEqual(expected, actual)
 

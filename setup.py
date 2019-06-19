@@ -12,6 +12,9 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/lgwillmore/type-mock",
     packages=setuptools.find_packages(),
+    install_requires=[
+        "typeguard"
+    ],
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Programming Language :: Python :: 3.5",

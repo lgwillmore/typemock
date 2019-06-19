@@ -1,7 +1,7 @@
 from typing import Any, Generic, Type, List, TypeVar, Tuple
 
 from typemock._mock.responders import Responder, ResponderBasic, ResponderMany, ResponderRaise, ResponderDo
-from typemock._utils import Blank
+from typemock._utils import Blank, is_type
 from typemock.api import MockTypeSafetyError, DoFunction
 from typemock.api import ResponseBuilder
 
@@ -32,7 +32,7 @@ class MockAttributeState(Generic[R]):
 
     def _validate_return(self, response: R):
         if not isinstance(self.type_hint, Blank):
-            if not isinstance(response, self.type_hint):
+            if not is_type(response, self.type_hint):
                 raise MockTypeSafetyError("Attribute: {} must be of type:{}".format(
                     self.name,
                     self.type_hint,
