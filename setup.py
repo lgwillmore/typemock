@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="typemock",
-    version="0.3.6",
+    version="0.4.0",
     author="Laurence Willmore",
     description="Type safe mocking",
     long_description=long_description,
