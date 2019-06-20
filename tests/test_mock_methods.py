@@ -5,6 +5,10 @@ from typemock import tmock, when, verify, match
 from typemock.api import NoBehaviourSpecifiedError
 
 
+class NestedThing:
+    nested_att: str = "internal"
+
+
 class MyThing:
     def return_a_str(self) -> str:
         pass
@@ -21,11 +25,14 @@ class MyThing:
     def method_with_default_args(self, first_number: int, second_string: str = "default") -> None:
         pass
 
-    def method_with_complex_args_and_return(
+    def method_with_standard_generic_args_and_return(
             self,
             list_arg: List[str],
             dict_arg: Dict[str, int]
     ) -> Dict[str, Any]:
+        pass
+
+    def method_with_object(self, nested_obj_arg: NestedThing) -> int:
         pass
 
 
@@ -83,6 +90,21 @@ class TestBasicMethodMocking(TestCase):
                 self.assertEqual(expected_result, actual)
                 verify(my_thing_mock).convert_int_to_str(1)
 
+    def test_mock__can_mock_method__object_arg__returns(self):
+        for mocked_thing in mocked_things:
+            with self.subTest("{}".format(mocked_thing)):
+                expected_result = 2
+
+                object_arg = NestedThing()
+
+                with tmock(mocked_thing) as my_thing_mock:
+                    when(my_thing_mock.method_with_object(object_arg)).then_return(expected_result)
+
+                actual = my_thing_mock.method_with_object(object_arg)
+
+                self.assertEqual(expected_result, actual)
+                verify(my_thing_mock).method_with_object(object_arg)
+
     def test_mock__can_mock_method__multiple_args__returns(self):
         for mocked_thing in mocked_things:
             with self.subTest("{}".format(mocked_thing)):
@@ -96,24 +118,24 @@ class TestBasicMethodMocking(TestCase):
                 self.assertEqual(expected_result, actual)
                 verify(my_thing_mock).multiple_arg("p", 1)
 
-    def test_mock__can_mock_method__complex_args_and_return__returns(self):
+    def test_mock__can_mock_method__generic_args_and_return__returns(self):
         for mocked_thing in mocked_things:
             with self.subTest("{}".format(mocked_thing)):
                 expected_result = {"my_key": True}
 
                 with tmock(mocked_thing) as my_thing_mock:
-                    when(my_thing_mock.method_with_complex_args_and_return(
+                    when(my_thing_mock.method_with_standard_generic_args_and_return(
                         list_arg=["hello"],
                         dict_arg={"foo": False}
                     )).then_return(expected_result)
 
-                actual = my_thing_mock.method_with_complex_args_and_return(
+                actual = my_thing_mock.method_with_standard_generic_args_and_return(
                     list_arg=["hello"],
                     dict_arg={"foo": False}
                 )
 
                 self.assertEqual(expected_result, actual)
-                verify(my_thing_mock).method_with_complex_args_and_return(
+                verify(my_thing_mock).method_with_standard_generic_args_and_return(
                     list_arg=["hello"],
                     dict_arg={"foo": False}
                 )

@@ -79,6 +79,9 @@ class MemberType:
 
 
 class MissingHint:
+    """
+    Describes the path to a missing type hint annotation.
+    """
 
     def __init__(self, path: List[str], member_type: str):
         self.path = path

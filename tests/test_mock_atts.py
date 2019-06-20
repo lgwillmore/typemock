@@ -19,10 +19,14 @@ class MyThing:
         self.instance_att_typed_init = instance_att_typed_init  # <- type from init
 
     @property
-    def derived_property(self) -> str:
+    def derived_property_throws_error(self) -> str:
         if self.instance_att_typed_init is None:
             raise Exception("Cannot derive")
         return "hello"
+
+    @property
+    def derived_property(self) -> str:
+        return "bye"
 
 
 mocked_things = [
@@ -146,5 +150,17 @@ class TestBasicClassAttributeMocking(TestCase):
                     when(my_thing_mock.derived_property).then_return(expected)
 
                 actual = my_thing_mock.derived_property
+
+                self.assertEqual(expected, actual)
+
+    def test_mock__property_with_error__get__simple_return(self):
+        for mocked_thing in mocked_things:
+            with self.subTest():
+                expected = "hello"
+
+                with tmock(mocked_thing) as my_thing_mock:
+                    when(my_thing_mock.derived_property_throws_error).then_return(expected)
+
+                actual = my_thing_mock.derived_property_throws_error
 
                 self.assertEqual(expected, actual)

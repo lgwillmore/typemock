@@ -40,7 +40,7 @@ def _is_magic(name: str) -> bool:
 
 
 def _is_private(name: str) -> bool:
-    return name.startswith("_")
+    return not _is_magic(name) and name.startswith("_")
 
 
 def is_property(name: str, thing: Union[Type[T], T]) -> bool:
