@@ -38,6 +38,9 @@ class MyThing:
     def method_with_args_and_kwargs(self, *args: str, **kwargs: int) -> bool:
         pass
 
+    def method_with_normal_args_and_kwargs(self, explicit1: int, *args: str, explicit2: int, **kwargs: int) -> bool:
+        pass
+
 
 mocked_things = [MyThing, MyThing()]
 

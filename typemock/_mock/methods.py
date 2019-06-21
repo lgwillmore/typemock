@@ -12,7 +12,7 @@ from typemock.match import Matcher
 T = TypeVar('T')
 R = TypeVar('R')
 
-OrderedCallValues = Tuple[Tuple[str, Any], ...]
+OrderedCallValues = Tuple[Any, ...]
 
 
 class CallCount:
@@ -25,7 +25,7 @@ class CallCount:
 
 def has_matchers(call: OrderedCallValues) -> bool:
     for call_param in call:
-        if isinstance(call_param[1], Matcher):
+        if isinstance(call_param, Matcher):
             return True
     return False
 
@@ -50,43 +50,33 @@ class MockMethodState(Generic[R]):
         self._arg_index_to_arg_name: Dict[int, str] = {}
         self._arg_name_to_parameter: Dict[str, inspect.Parameter] = {}
         self._call_record: List[OrderedCallValues] = []
+        self._has_var_pos = False
+        self._has_var_keyword = False
         i = 0
         for name, param in signature.parameters.items():
+            if param.kind == inspect.Parameter.VAR_KEYWORD:
+                self._has_var_keyword = True
+            if param.kind == inspect.Parameter.VAR_POSITIONAL:
+                self._has_var_pos = True
             self._arg_index_to_arg_name[i] = name
             self._arg_name_to_parameter[name] = param
             i += 1
 
-    def _ordered_call(self, *args, **kwargs) -> OrderedCallValues:
-        if len(args) > len(self._arg_index_to_arg_name):
+    def _ordered_call_conventional(self, *args, **kwargs) -> OrderedCallValues:
+        try:
+            binding = self._signature.bind(*args, **kwargs)
+            ordered_call = binding.args[1:]
+            # self._check_key_type_safety(ordered_call)
+            return ordered_call
+        except TypeError:
             raise MockTypeSafetyError("Method: {} cannot be called with args:{} kwargs{}".format(
                 self.name,
                 args[1:],
                 kwargs
             ))
-        args_dict = {}
-        for i in range(1, len(args)):
-            arg = args[i]
-            args_dict[self._arg_index_to_arg_name[i]] = arg
-        for key, value in kwargs.items():
-            if key not in self._arg_name_to_parameter:
-                raise MockTypeSafetyError("Method: {} cannot be called with args:{} kwargs{}".format(
-                    self.name,
-                    args[1:],
-                    kwargs
-                ))
-            args_dict[key] = value
-        ordered_key_values = []
-        for name, param in self._signature.parameters.items():
-            if name == "self":
-                continue
-            value = args_dict.get(
-                name,
-                self._arg_name_to_parameter[name].default
-            )
-            ordered_key_values.append((name, value))
-        ordered_call = tuple(ordered_key_values)
-        self._check_key_type_safety(ordered_call)
-        return ordered_call
+
+    def _ordered_call(self, *args, **kwargs) -> OrderedCallValues:
+        return self._ordered_call_conventional(*args, **kwargs)
 
     def response_for(self, *args, **kwargs) -> R:
         key = self._ordered_call(*args, **kwargs)
@@ -98,7 +88,7 @@ class MockMethodState(Generic[R]):
         else:
             for matcher_key, responder in self._matcher_responses.items():
                 if matcher_key == key:
-                    self._check_key_type_safety(key)
+                    # self._check_key_type_safety(key)
                     r = responder.response(*args, **kwargs)
                     self._validate_return(r)
                     return r
