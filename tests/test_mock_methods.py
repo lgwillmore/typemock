@@ -261,9 +261,9 @@ class TestBasicMethodMocking(TestCase):
 
         expected_arg = 1
 
-        def bounce_back_handler(*args):
-            assert args[0] == expected_arg
-            return "{}".format(args[0])
+        def bounce_back_handler(number: int):
+            assert number == expected_arg
+            return "{}".format(number)
 
         for mocked_thing in mocked_things:
             with self.subTest("{}".format(mocked_thing)):

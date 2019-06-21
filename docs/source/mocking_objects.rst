@@ -113,12 +113,14 @@ By default, if we interact with the method more than the specified series, we wi
 Programmatic response
 ---------------------
 
-You can provide dynamic responses through a function handler. The function has access to the call arguments through var args.
+You can provide dynamic responses through a function handler.
+
+The function should have the same signature as the method it is mocking so that mixes of positional and keyword arguments are handled in a deterministic way.
 
 .. code-block:: python
 
-    def bounce_back_handler(*args):
-        return "{}".format(args[0])
+    def bounce_back_handler(number: int) -> str:
+        return "{}".format(number)
 
     with tmock(MyThing) as my_thing_mock:
         when(my_thing_mock.convert_int_to_str(1)).then_do(bounce_back_handler)
@@ -281,30 +283,16 @@ Get Raise
 
     my_thing_mock.name  # <- Error raised here.
 
-
-
-Set Raise
-----------
-
-As with any `get` interactions, you can also mock the behaviour or `set` interactions. While the response behaviours do not make much sense for a `set`, an error behaviour is conceivable.
-
-.. code-block:: python
-
-    with tmock(MyThing) as my_thing_mock:
-        when(my_thing_mock.name = "new name").then_raise(IOError)
-
-    my_thing_mock.name = "new name" # <- Error raised here.
-
 Get programmatic response
 -------------------------
 
-As with methods, you can provide dynamic responses through a function handler. And although the handler needs to take a single vararg parameter, in the case of a `get` interaction, this will be empty.
+As with methods, you can provide dynamic responses through a function handler.
 
-It might be useful if you do want to wire up some stateful mocking/faking though.
+It might be useful if you do want to wire up some stateful mocking/faking or have some other dependency.
 
 .. code-block:: python
 
-    def name_get_handler(*args):
+    def name_get_handler():
         return "my name"
 
     with tmock(MyThing) as my_thing_mock:
@@ -312,19 +300,3 @@ It might be useful if you do want to wire up some stateful mocking/faking though
 
     assert "my name" == my_thing_mock.name
 
-Set programmatic response
--------------------------
-
-Again, you can provide dynamic responses through a function handler, for `set` interactions, and it must take a single vararg parameter. However, this will only have a single member for the value being set.
-
-As with programmatic `get` it might be useful if you do want to wire up some stateful mocking/faking.
-
-.. code-block:: python
-
-    def name_set_handler(*args):
-        print("My name is now {}".format(args[0]))
-
-    with tmock(MyThing) as my_thing_mock:
-        when(my_thing_mock.name = match.anything()).then_do(name_set_handler)
-
-    my_thing_mock.name = "new name" # <- prints the new name.

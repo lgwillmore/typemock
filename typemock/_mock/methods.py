@@ -1,4 +1,5 @@
 import inspect
+from collections import OrderedDict
 from inspect import Signature
 from types import FunctionType
 from typing import Tuple, Any, Generic, Dict, List, Callable, TypeVar
@@ -12,7 +13,7 @@ from typemock.match import Matcher
 T = TypeVar('T')
 R = TypeVar('R')
 
-OrderedCallValues = Tuple[Any, ...]
+OrderedCallValues = Tuple[Tuple[str, Any], ...]
 
 
 class CallCount:
@@ -25,7 +26,7 @@ class CallCount:
 
 def has_matchers(call: OrderedCallValues) -> bool:
     for call_param in call:
-        if isinstance(call_param, Matcher):
+        if isinstance(call_param[1], Matcher):
             return True
     return False
 
@@ -50,14 +51,8 @@ class MockMethodState(Generic[R]):
         self._arg_index_to_arg_name: Dict[int, str] = {}
         self._arg_name_to_parameter: Dict[str, inspect.Parameter] = {}
         self._call_record: List[OrderedCallValues] = []
-        self._has_var_pos = False
-        self._has_var_keyword = False
         i = 0
         for name, param in signature.parameters.items():
-            if param.kind == inspect.Parameter.VAR_KEYWORD:
-                self._has_var_keyword = True
-            if param.kind == inspect.Parameter.VAR_POSITIONAL:
-                self._has_var_pos = True
             self._arg_index_to_arg_name[i] = name
             self._arg_name_to_parameter[name] = param
             i += 1
@@ -65,8 +60,8 @@ class MockMethodState(Generic[R]):
     def _ordered_call_conventional(self, *args, **kwargs) -> OrderedCallValues:
         try:
             binding = self._signature.bind(*args, **kwargs)
-            ordered_call = binding.args[1:]
-            # self._check_key_type_safety(ordered_call)
+            ordered_call = tuple(binding.arguments.items())[1:]
+            self._check_key_type_safety(ordered_call)
             return ordered_call
         except TypeError:
             raise MockTypeSafetyError("Method: {} cannot be called with args:{} kwargs{}".format(
@@ -88,8 +83,8 @@ class MockMethodState(Generic[R]):
         else:
             for matcher_key, responder in self._matcher_responses.items():
                 if matcher_key == key:
-                    # self._check_key_type_safety(key)
-                    r = responder.response(*args, **kwargs)
+                    self._check_key_type_safety(key)
+                    r = responder.response(**OrderedDict(key))
                     self._validate_return(r)
                     return r
             raise NoBehaviourSpecifiedError(
@@ -182,7 +177,12 @@ class MockMethodState(Generic[R]):
             if isinstance(arg_value, Matcher):
                 continue
             if arg_name in func_annotations:
+                param = self._arg_name_to_parameter[arg_name]
                 arg_type = func_annotations[arg_name]
+                if param.kind == inspect.Parameter.VAR_POSITIONAL:
+                    arg_type = Tuple[arg_type, ...]  # type: ignore
+                if param.kind == inspect.Parameter.VAR_KEYWORD:
+                    arg_type = Dict[str, arg_type]  # type: ignore
                 if not is_type(arg_value, arg_type):
                     raise MockTypeSafetyError("Method: {} Arg: {} must be of type:{}".format(
                         self.name,
