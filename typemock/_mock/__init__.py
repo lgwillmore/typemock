@@ -1,11 +1,28 @@
 from types import FunctionType
-from typing import Union, Type, cast, TypeVar
+from typing import Union, Type, cast, TypeVar, Awaitable
 
 from typemock._mock.object import MockObject
 from typemock.api import MockingError, TypeSafety, ResponseBuilder
 
 T = TypeVar('T')
 R = TypeVar('R')
+
+_error_when_context_closed = """
+Did not receive a response builder.
+
+Are you trying to specify behaviour outside of the mock context?
+"""
+
+_error_when_async_not_awaited = """
+
+Did not receive a response builder.
+
+You need to await async functions when defining behaviour of the mock. Example:
+
+    with tmock(MyAsyncThing) as my_async_mock:
+        when(await my_async_mock.get_an_async_result()).then_return(expected)
+
+"""
 
 
 def _tmock(clazz: Union[Type[T], T], type_safety: TypeSafety = TypeSafety.STRICT) -> T:
@@ -49,7 +66,7 @@ def _when(mock_call_result: T) -> ResponseBuilder[T]:
 
     """
     if not isinstance(mock_call_result, ResponseBuilder):
-        raise MockingError(
-            "Did not receive a response builder. Are you trying to specify behaviour outside of the mock context?"
-        )
+        if isinstance(mock_call_result, Awaitable):
+            raise MockingError(_error_when_async_not_awaited)
+        raise MockingError(_error_when_context_closed)
     return cast(ResponseBuilder[T], mock_call_result)

@@ -22,7 +22,7 @@ class MyThing:
 
 class TestMockVerify(TestCase):
 
-    def test_verify__not_called__verify_error(self):
+    def test_verify__at_least__no_calls__verify_error(self):
         with tmock(MyThing) as my_thing_mock:
             when(my_thing_mock.some_instance_attribute).then_return("Hello")
             when(my_thing_mock.do_something_with_side_effects()).then_return(None)
@@ -39,7 +39,24 @@ class TestMockVerify(TestCase):
         with self.assertRaises(VerifyError):
             verify(my_thing_mock).some_instance_attribute = "bye"
 
-    def test_verify__called(self):
+    def test_verify__at_least__other_calls__verify_error(self):
+        with tmock(MyThing) as my_thing_mock:
+            when(my_thing_mock.some_instance_attribute).then_return("Hello")
+            when(my_thing_mock.convert_int_to_str(match.anything())).then_return("bye")
+
+        my_thing_mock.convert_int_to_str(1)
+
+        # Method
+        with self.assertRaises(VerifyError):
+            verify(my_thing_mock).convert_int_to_str(2)
+
+        my_thing_mock.some_instance_attribute = "something_else"
+
+        # Set attribute
+        with self.assertRaises(VerifyError):
+            verify(my_thing_mock).some_instance_attribute = "hello2"
+
+    def test_verify__at_least__was_called(self):
         with tmock(MyThing) as my_thing_mock:
             when(my_thing_mock.some_instance_attribute).then_return("Hello")
             when(my_thing_mock.do_something_with_side_effects()).then_return(None)
@@ -59,19 +76,41 @@ class TestMockVerify(TestCase):
 
         verify(my_thing_mock).some_instance_attribute = "bye"
 
-    def test_verify__not_called__verify_exact_calls_0(self):
-        my_thing_mock = tmock(MyThing)
+    def test_verify__exactly__not_matched__no_other_calls__verify_error(self):
+        with tmock(MyThing) as my_thing_mock:
+            when(my_thing_mock.some_instance_attribute).then_return("Hello")
+            when(my_thing_mock.do_something_with_side_effects()).then_return(None)
 
         # Method
-        verify(my_thing_mock, exactly=0).do_something_with_side_effects()
+        with self.assertRaises(VerifyError):
+            verify(my_thing_mock, exactly=1).do_something_with_side_effects()
 
-        # Get Attribute
-        verify(my_thing_mock, exactly=0).some_instance_attribute
+        # Get attribute
+        with self.assertRaises(VerifyError):
+            verify(my_thing_mock, exactly=1).some_instance_attribute
 
-        # Set Attribute
-        verify(my_thing_mock, exactly=0).some_instance_attribute = "one"
+        # Set attribute
+        with self.assertRaises(VerifyError):
+            verify(my_thing_mock, exactly=1).some_instance_attribute = "bye"
 
-    def test_verify_called__incorrect_amount_of_times__verify_error(self):
+    def test_verify__exactly__not_matched__other_calls__verify_error(self):
+        with tmock(MyThing) as my_thing_mock:
+            when(my_thing_mock.some_instance_attribute).then_return("Hello")
+            when(my_thing_mock.convert_int_to_str(match.anything())).then_return("A string")
+
+        my_thing_mock.convert_int_to_str(1)
+
+        # Method
+        with self.assertRaises(VerifyError):
+            verify(my_thing_mock, exactly=2).convert_int_to_str(2)
+
+        my_thing_mock.some_instance_attribute = "something else"
+
+        # Set attribute
+        with self.assertRaises(VerifyError):
+            verify(my_thing_mock, exactly=2).some_instance_attribute = "bye"
+
+    def test_verify__exactly__incorrect_amount_of_times__verify_error(self):
         with tmock(MyThing) as my_thing_mock:
             when(my_thing_mock.do_something_with_side_effects()).then_return(None)
             when(my_thing_mock.some_instance_attribute).then_return("hello")

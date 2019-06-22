@@ -11,10 +11,10 @@ R = TypeVar('R')
 
 class CalledSetRecord:
 
-    def __init__(self, call: Any, count: int, other_call_count: int):
+    def __init__(self, call: Any, count: int, other_calls: List[Any]):
         self.call = call
         self.count = count
-        self.other_call_count = other_call_count
+        self.other_calls = other_calls
 
 
 def _null_ordered_call(*args, **kwargs) -> Tuple[Tuple[str, Any], ...]:
@@ -68,14 +68,14 @@ class MockAttributeState(Generic[R]):
         self._responder = ResponderBasic(item)
 
     def called_set_record(self, expected_call) -> CalledSetRecord:
-        other_count = 0
+        other_calls = []
         count = 0
         for call in self._set_calls:
             if expected_call == call:
                 count += 1
             else:
-                other_count += 1
-        return CalledSetRecord(expected_call, count, other_count)
+                other_calls.append(call)
+        return CalledSetRecord(expected_call, count, other_calls)
 
 
 class AttributeResponseBuilder(Generic[R], ResponseBuilder[R]):

@@ -60,6 +60,4 @@ class ResponderDo(Generic[R], Responder[R]):
         self._do_function = do_function
 
     def response(self, *args, **kwargs) -> R:
-        call = self._ordered_call(*args, **kwargs)
-        values = tuple([value for key, value in call])
-        return self._do_function(*values)
+        return self._do_function(*args, **kwargs)

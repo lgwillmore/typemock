@@ -1,4 +1,5 @@
 import inspect
+from collections import OrderedDict
 from inspect import Signature
 from types import FunctionType
 from typing import Tuple, Any, Generic, Dict, List, Callable, TypeVar
@@ -17,10 +18,21 @@ OrderedCallValues = Tuple[Tuple[str, Any], ...]
 
 class CallCount:
 
-    def __init__(self, call: OrderedCallValues, count: int, other_call_count: int):
+    def __init__(self, call: OrderedCallValues, count: int, other_calls: List[OrderedCallValues]):
         self.call = call
         self.count = count
-        self.other_call_count = other_call_count
+        self.other_calls = other_calls
+
+
+_error_invalid_mock_args = """
+
+Invalid arguments for method '{method_name}':
+
+Received args: {attempted_args}, kwargs: {attempted_kwargs}
+
+Expected: {actual_signature}
+
+"""
 
 
 def has_matchers(call: OrderedCallValues) -> bool:
@@ -56,37 +68,22 @@ class MockMethodState(Generic[R]):
             self._arg_name_to_parameter[name] = param
             i += 1
 
+    def _ordered_call_conventional(self, *args, **kwargs) -> OrderedCallValues:
+        try:
+            binding = self._signature.bind(*args, **kwargs)
+            ordered_call = tuple(binding.arguments.items())[1:]
+            self._check_key_type_safety(ordered_call)
+            return ordered_call
+        except TypeError as e:
+            raise MockTypeSafetyError(_error_invalid_mock_args.format(
+                method_name=self.name,
+                attempted_args=args[1:],
+                attempted_kwargs=kwargs,
+                actual_signature=self._signature
+            )) from e
+
     def _ordered_call(self, *args, **kwargs) -> OrderedCallValues:
-        if len(args) > len(self._arg_index_to_arg_name):
-            raise MockTypeSafetyError("Method: {} cannot be called with args:{} kwargs{}".format(
-                self.name,
-                args[1:],
-                kwargs
-            ))
-        args_dict = {}
-        for i in range(1, len(args)):
-            arg = args[i]
-            args_dict[self._arg_index_to_arg_name[i]] = arg
-        for key, value in kwargs.items():
-            if key not in self._arg_name_to_parameter:
-                raise MockTypeSafetyError("Method: {} cannot be called with args:{} kwargs{}".format(
-                    self.name,
-                    args[1:],
-                    kwargs
-                ))
-            args_dict[key] = value
-        ordered_key_values = []
-        for name, param in self._signature.parameters.items():
-            if name == "self":
-                continue
-            value = args_dict.get(
-                name,
-                self._arg_name_to_parameter[name].default
-            )
-            ordered_key_values.append((name, value))
-        ordered_call = tuple(ordered_key_values)
-        self._check_key_type_safety(ordered_call)
-        return ordered_call
+        return self._ordered_call_conventional(*args, **kwargs)
 
     def response_for(self, *args, **kwargs) -> R:
         key = self._ordered_call(*args, **kwargs)
@@ -99,7 +96,7 @@ class MockMethodState(Generic[R]):
             for matcher_key, responder in self._matcher_responses.items():
                 if matcher_key == key:
                     self._check_key_type_safety(key)
-                    r = responder.response(*args, **kwargs)
+                    r = responder.response(**OrderedDict(key))
                     self._validate_return(r)
                     return r
             raise NoBehaviourSpecifiedError(
@@ -107,15 +104,15 @@ class MockMethodState(Generic[R]):
             )
 
     def call_count_for(self, *args, **kwargs) -> CallCount:
-        other_count = 0
+        other_calls = []
         count = 0
         expected_call = self._ordered_call(*args, **kwargs)
         for call in self._call_record:
             if call == expected_call:
                 count += 1
             else:
-                other_count += 1
-        return CallCount(expected_call, count, other_count)
+                other_calls.append(call)
+        return CallCount(expected_call, count, other_calls)
 
     def _validate_return(self, response: R):
         func_annotations = self.func.__annotations__
@@ -192,7 +189,12 @@ class MockMethodState(Generic[R]):
             if isinstance(arg_value, Matcher):
                 continue
             if arg_name in func_annotations:
+                param = self._arg_name_to_parameter[arg_name]
                 arg_type = func_annotations[arg_name]
+                if param.kind == inspect.Parameter.VAR_POSITIONAL:
+                    arg_type = Tuple[arg_type, ...]  # type: ignore
+                if param.kind == inspect.Parameter.VAR_KEYWORD:
+                    arg_type = Dict[str, arg_type]  # type: ignore
                 if not is_type(arg_value, arg_type):
                     raise MockTypeSafetyError("Method: {} Arg: {} must be of type:{}".format(
                         self.name,

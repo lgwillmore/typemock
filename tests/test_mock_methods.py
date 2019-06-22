@@ -35,6 +35,12 @@ class MyThing:
     def method_with_object(self, nested_obj_arg: NestedThing) -> int:
         pass
 
+    def method_with_args_and_kwargs(self, *args: str, **kwargs: int) -> bool:
+        pass
+
+    def method_with_normal_args_and_kwargs(self, explicit1: int, *args: str, explicit2: int, **kwargs: int) -> bool:
+        pass
+
 
 mocked_things = [MyThing, MyThing()]
 
@@ -104,6 +110,21 @@ class TestBasicMethodMocking(TestCase):
 
                 self.assertEqual(expected_result, actual)
                 verify(my_thing_mock).method_with_object(object_arg)
+
+    def test_mock__can_mock_method__args_and_kwargs__returns(self):
+        for mocked_thing in mocked_things:
+            with self.subTest("{}".format(mocked_thing)):
+                expected_result = False
+
+                with tmock(mocked_thing) as my_thing_mock:
+                    when(my_thing_mock.method_with_args_and_kwargs(
+                        "a", "b", key1=1, key2=2
+                    )).then_return(expected_result)
+
+                actual = my_thing_mock.method_with_args_and_kwargs("a", "b", key1=1, key2=2)
+
+                self.assertEqual(expected_result, actual)
+                verify(my_thing_mock).method_with_args_and_kwargs("a", "b", key1=1, key2=2)
 
     def test_mock__can_mock_method__multiple_args__returns(self):
         for mocked_thing in mocked_things:
@@ -240,9 +261,9 @@ class TestBasicMethodMocking(TestCase):
 
         expected_arg = 1
 
-        def bounce_back_handler(*args):
-            assert args[0] == expected_arg
-            return "{}".format(args[0])
+        def bounce_back_handler(number: int):
+            assert number == expected_arg
+            return "{}".format(number)
 
         for mocked_thing in mocked_things:
             with self.subTest("{}".format(mocked_thing)):

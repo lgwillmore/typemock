@@ -9,7 +9,7 @@ The mocking tools in python are powerful, flexible and useful for building indep
 
 This flexibility is part of what is considered a strength of the python language, and possibly any dynamically typed language.
 
-However, this flexibility comes at a cost.
+However, this flexibility comes at a cost. Type flexibility in particular.
 
 It is possible to build mocks which do not conform to the actual behaviour or contract defined by the things they are mocking. Or, for them to be initially correct, and then to go out of sync with actual behaviour and for tests to remain green.
 
@@ -19,13 +19,9 @@ But, now we have type hints. And so, we can explicitly define the contracts of o
 
 Used in conjunction with mypy, this should result in much more high fidelity independent tests.
 
-.. note:: A small note on the word `mock`
+.. note::
 
-   Yes, in many cases through out the testing world and across languages, the word mock is used incorrectly. We should probably be calling things `Test Doubles`, and if we are only checking interactions occur, then we can call that particular Test Double a mock.
-
-   This is fine, but it probably means that the vast majority of all test doubles are in fact `Fakes` as the only thing you would really be able to mock would be functions with no returns and only side effects. Any test double that returns something is performing some behaviour, and so should probably be classed as a Fake.
-
-   We are going to just ignore all of that. If you want, you can alias the `tmock` function to `tfake` or something like that?
+    typemock uses the `typeguard` library to do runtime type checking. Just wanted to give them credit, and make users of this library aware.
 
 .. toctree::
    :maxdepth: 3

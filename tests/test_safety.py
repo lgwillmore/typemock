@@ -40,6 +40,9 @@ class ClassWithMultipleUnHintedThings:
     def good_method_with_no_args_and_return(self) -> str:
         pass
 
+    def method_with_args_and_kwargs(self, *args, **kwargs) -> None:
+        pass
+
     def method_with_missing_arg_hint(self, something, something_else: bool) -> None:
         pass
 
@@ -72,6 +75,8 @@ class TestSafety(TestCase):
             MissingHint(['instance_att_hinted_no_init'], MemberType.ATTRIBUTE),
             MissingHint(['instance_att_unhinted_no_init'], MemberType.ATTRIBUTE),
             MissingHint(['instance_att_with_unhinted_init'], MemberType.ATTRIBUTE),
+            MissingHint(['method_with_args_and_kwargs', 'args'], MemberType.ARG),
+            MissingHint(['method_with_args_and_kwargs', 'kwargs'], MemberType.ARG),
             MissingHint(['method_with_missing_arg_hint', 'something'], MemberType.ARG),
             MissingHint(['method_with_missing_return_type'], MemberType.RETURN)
         ]
@@ -89,6 +94,8 @@ class TestSafety(TestCase):
             MissingHint(['instance_att_hinted_no_init'], MemberType.ATTRIBUTE),
             MissingHint(['instance_att_unhinted_no_init'], MemberType.ATTRIBUTE),
             MissingHint(['instance_att_with_unhinted_init'], MemberType.ATTRIBUTE),
+            MissingHint(['method_with_args_and_kwargs', 'args'], MemberType.ARG),
+            MissingHint(['method_with_args_and_kwargs', 'kwargs'], MemberType.ARG),
             MissingHint(['method_with_missing_arg_hint', 'something'], MemberType.ARG),
         ]
 
