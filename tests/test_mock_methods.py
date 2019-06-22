@@ -200,6 +200,19 @@ class TestBasicMethodMocking(TestCase):
 
                 verify(my_thing_mock).method_with_default_args(1)
 
+    def test_mock__can_mock_method__default_args_with_matchers(self):
+        for mocked_thing in mocked_things:
+            with self.subTest("{}".format(mocked_thing)):
+                with tmock(mocked_thing) as my_thing_mock:
+                    when(my_thing_mock.method_with_default_args(
+                        first_number=match.anything(),
+                        second_string=match.anything()
+                    )).then_return(None)
+
+                my_thing_mock.method_with_default_args(1)
+
+                verify(my_thing_mock).method_with_default_args(1)
+
     def test_mock__can_mock_method__no_args__no_return(self):
         for mocked_thing in mocked_things:
             with self.subTest("{}".format(mocked_thing)):

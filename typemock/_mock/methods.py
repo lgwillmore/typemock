@@ -68,10 +68,28 @@ class MockMethodState(Generic[R]):
             self._arg_name_to_parameter[name] = param
             i += 1
 
-    def _ordered_call_conventional(self, *args, **kwargs) -> OrderedCallValues:
+    def _populate_defaults(self, ordered_call: OrderedCallValues) -> OrderedCallValues:
+        if len(ordered_call) == len(self._arg_index_to_arg_name):
+            return ordered_call
+        args_dict = {}
+        for name, value in ordered_call:
+            args_dict[name] = value
+        ordered_key_values = []
+        for name, param in self._signature.parameters.items():
+            if name == "self":
+                continue
+            value = args_dict.get(
+                name,
+                self._arg_name_to_parameter[name].default
+            )
+            ordered_key_values.append((name, value))
+        return tuple(ordered_key_values)
+
+    def _ordered_call(self, *args, **kwargs) -> OrderedCallValues:
         try:
             binding = self._signature.bind(*args, **kwargs)
             ordered_call = tuple(binding.arguments.items())[1:]
+            ordered_call = self._populate_defaults(ordered_call)
             self._check_key_type_safety(ordered_call)
             return ordered_call
         except TypeError as e:
@@ -81,9 +99,6 @@ class MockMethodState(Generic[R]):
                 attempted_kwargs=kwargs,
                 actual_signature=self._signature
             )) from e
-
-    def _ordered_call(self, *args, **kwargs) -> OrderedCallValues:
-        return self._ordered_call_conventional(*args, **kwargs)
 
     def response_for(self, *args, **kwargs) -> R:
         key = self._ordered_call(*args, **kwargs)
