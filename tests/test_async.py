@@ -3,6 +3,7 @@ from unittest import TestCase
 import trio as trio
 
 from typemock import tmock, when, verify
+from typemock.api import MockingError
 
 
 class MyAsyncThing:
@@ -35,3 +36,11 @@ class TestAsyncMocking(TestCase):
         self.assertEqual(expected, await my_async_mock.get_an_async_result())
 
         verify(my_async_mock).get_an_async_result()
+
+    @async_test
+    async def test_we_get_an_error_if_we_do_not_await(self):
+        expected = "Hello"
+
+        with self.assertRaises(MockingError):
+            with tmock(MyAsyncThing) as my_async_mock:
+                when(my_async_mock.get_an_async_result()).then_return(expected)

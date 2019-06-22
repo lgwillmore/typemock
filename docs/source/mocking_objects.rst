@@ -28,7 +28,7 @@ There will be cases where, if an instance of the class has complex `__init__` fu
 .. note::
 
     - You must specify the behaviour of any method that your test is going to interact with. Interacting with a method with no specified behaviour results in an error.
-    - Typemock does not do static patching of the class being mocked. Any mocked behaviour will only be available fro the mock instance itself, not via a class accessed call.
+    - Typemock does not do static patching of the class being mocked. Any mocked behaviour will only be available from the mock instance itself, not via a class accessed call.
     - Instance level attributes might not be available if the `__init__` method has some more complex logic. Use an already instantiated object in this case.
 
 Now lets look at how to specify the behaviour for a mocked class or object.

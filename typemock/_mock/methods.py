@@ -18,10 +18,21 @@ OrderedCallValues = Tuple[Tuple[str, Any], ...]
 
 class CallCount:
 
-    def __init__(self, call: OrderedCallValues, count: int, other_call_count: int):
+    def __init__(self, call: OrderedCallValues, count: int, other_calls: List[OrderedCallValues]):
         self.call = call
         self.count = count
-        self.other_call_count = other_call_count
+        self.other_calls = other_calls
+
+
+_error_invalid_mock_args = """
+
+Invalid arguments for method '{method_name}':
+
+Received args: {attempted_args}, kwargs: {attempted_kwargs}
+
+Expected: {actual_signature}
+
+"""
 
 
 def has_matchers(call: OrderedCallValues) -> bool:
@@ -63,12 +74,13 @@ class MockMethodState(Generic[R]):
             ordered_call = tuple(binding.arguments.items())[1:]
             self._check_key_type_safety(ordered_call)
             return ordered_call
-        except TypeError:
-            raise MockTypeSafetyError("Method: {} cannot be called with args:{} kwargs{}".format(
-                self.name,
-                args[1:],
-                kwargs
-            ))
+        except TypeError as e:
+            raise MockTypeSafetyError(_error_invalid_mock_args.format(
+                method_name=self.name,
+                attempted_args=args[1:],
+                attempted_kwargs=kwargs,
+                actual_signature=self._signature
+            )) from e
 
     def _ordered_call(self, *args, **kwargs) -> OrderedCallValues:
         return self._ordered_call_conventional(*args, **kwargs)
@@ -92,15 +104,15 @@ class MockMethodState(Generic[R]):
             )
 
     def call_count_for(self, *args, **kwargs) -> CallCount:
-        other_count = 0
+        other_calls = []
         count = 0
         expected_call = self._ordered_call(*args, **kwargs)
         for call in self._call_record:
             if call == expected_call:
                 count += 1
             else:
-                other_count += 1
-        return CallCount(expected_call, count, other_count)
+                other_calls.append(call)
+        return CallCount(expected_call, count, other_calls)
 
     def _validate_return(self, response: R):
         func_annotations = self.func.__annotations__

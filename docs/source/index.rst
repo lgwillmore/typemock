@@ -9,7 +9,7 @@ The mocking tools in python are powerful, flexible and useful for building indep
 
 This flexibility is part of what is considered a strength of the python language, and possibly any dynamically typed language.
 
-However, this flexibility comes at a cost.
+However, this flexibility comes at a cost. Type flexibility in particular.
 
 It is possible to build mocks which do not conform to the actual behaviour or contract defined by the things they are mocking. Or, for them to be initially correct, and then to go out of sync with actual behaviour and for tests to remain green.
 
@@ -21,7 +21,7 @@ Used in conjunction with mypy, this should result in much more high fidelity ind
 
 .. note::
 
-    typemock uses the `typeguard` library to do type checking. Just wanted to give them credit, and make users of this library aware.
+    typemock uses the `typeguard` library to do runtime type checking. Just wanted to give them credit, and make users of this library aware.
 
 .. toctree::
    :maxdepth: 3
