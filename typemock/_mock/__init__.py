@@ -2,7 +2,7 @@ from types import FunctionType
 from typing import Union, Type, cast, TypeVar, Awaitable
 
 from typemock._mock.object import MockObject
-from typemock.api import MockingError, TypeSafety, ResponseBuilder
+from typemock.api import MockingError, TypeSafety, ResponseBuilder, TypeSafetyConfig
 
 T = TypeVar('T')
 R = TypeVar('R')
@@ -25,7 +25,7 @@ You need to await async functions when defining behaviour of the mock. Example:
 """
 
 
-def _tmock(clazz: Union[Type[T], T], type_safety: TypeSafety = TypeSafety.STRICT) -> T:
+def _tmock(clazz: Union[Type[T], T], type_safety: TypeSafetyConfig = TypeSafety.STRICT) -> T:
     """
     Mocks a given class.
 

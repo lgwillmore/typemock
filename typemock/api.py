@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from enum import Enum
 from typing import TypeVar, List, Generic, Callable
 
 T = TypeVar('T')
@@ -66,10 +65,42 @@ class ResponseBuilder(ABC, Generic[R]):
         """
 
 
-class TypeSafety(Enum):
-    STRICT = 1  # Everything must be type hinted
-    NO_RETURN_IS_NONE_RETURN = 2  # Everything type hinted, but no returns are interpreted as None returns
-    RELAXED = 3  # Enforce type safety where there are type hints.
+class TypeSafetyConfig:
+
+    def __init__(
+            self,
+            no_return_is_none_return: bool = False,
+            relax_method_arg_types: bool = False,
+            relax_attribute_types: bool = False,
+    ):
+        self.no_return_is_none_return = no_return_is_none_return
+        self.relax_method_arg_types = relax_method_arg_types
+        self.relax_attribute_types = relax_attribute_types
+
+
+class TypeSafety:
+    # Everything must be type hinted
+    STRICT: TypeSafetyConfig = TypeSafetyConfig()
+
+    # Everything type hinted, but no returns are interpreted as None returns
+    NO_RETURN_IS_NONE_RETURN: TypeSafetyConfig = TypeSafetyConfig(
+        no_return_is_none_return=True
+    )
+
+    # Enforce type safety where there are type hints.
+    RELAXED: TypeSafetyConfig = TypeSafetyConfig(
+        no_return_is_none_return=True,
+        relax_attribute_types=True,
+        relax_method_arg_types=True
+    )
+
+    @classmethod
+    def all(cls):
+        return [
+            cls.STRICT,
+            cls.RELAXED,
+            cls.NO_RETURN_IS_NONE_RETURN
+        ]
 
 
 class MemberType:

@@ -110,35 +110,35 @@ class TestSafety(TestCase):
         tmock(ClassWithMultipleUnHintedThings, type_safety=TypeSafety.RELAXED)
 
     def test_try_to_specify_non_type_safe_argument_matching__simple_type(self):
-        for type_safety in TypeSafety:
+        for type_safety in TypeSafety.all():
             with self.subTest():
                 with self.assertRaises(MockTypeSafetyError):
                     with tmock(MyThing, type_safety=type_safety) as my_thing_mock:
                         when(my_thing_mock.convert_int_to_str("not an int")).then_return("another string")
 
     def test_try_to_specify_behaviour_with_missing_args(self):
-        for type_safety in TypeSafety:
+        for type_safety in TypeSafety.all():
             with self.subTest():
                 with self.assertRaises(MockTypeSafetyError):
                     with tmock(MyThing, type_safety=type_safety) as my_thing_mock:
                         when(my_thing_mock.convert_int_to_str()).then_return("another string")
 
     def test_try_to_specify_behaviour_with_extra_args(self):
-        for type_safety in TypeSafety:
+        for type_safety in TypeSafety.all():
             with self.subTest():
                 with self.assertRaises(MockTypeSafetyError):
                     with tmock(MyThing, type_safety=type_safety) as my_thing_mock:
                         when(my_thing_mock.convert_int_to_str(1, 2)).then_return("another string")
 
     def test_try_to_specify_behaviour_with_extra_kwargs(self):
-        for type_safety in TypeSafety:
+        for type_safety in TypeSafety.all():
             with self.subTest():
                 with self.assertRaises(MockTypeSafetyError):
                     with tmock(MyThing, type_safety=type_safety) as my_thing_mock:
                         when(my_thing_mock.convert_int_to_str(number=1, another=2)).then_return("another string")
 
     def test_try_to_specify_non_type_safe_return_type__simple_type(self):
-        for type_safety in TypeSafety:
+        for type_safety in TypeSafety.all():
             with self.subTest():
                 # Method
                 with self.assertRaises(MockTypeSafetyError):
@@ -155,7 +155,7 @@ class TestSafety(TestCase):
         def do_return(*args):
             return 1
 
-        for type_safety in TypeSafety:
+        for type_safety in TypeSafety.all():
             with self.subTest():
                 # Method
                 with self.assertRaises(MockTypeSafetyError):
@@ -170,14 +170,14 @@ class TestSafety(TestCase):
                     my_thing_mock.a_hinted_str_attribute
 
     def test_try_to_specify_non_type_safe_return_type__simple_type__return_many(self):
-        for type_safety in TypeSafety:
+        for type_safety in TypeSafety.all():
             with self.subTest():
                 with self.assertRaises(MockTypeSafetyError):
                     with tmock(MyThing, type_safety=type_safety) as my_thing_mock:
                         when(my_thing_mock.convert_int_to_str(1)).then_return_many(["okay", 1])
 
     def test_try_to_set_attribute_with_incorrect_type(self):
-        for type_safety in TypeSafety:
+        for type_safety in TypeSafety.all():
             with self.subTest():
                 my_thing_mock = tmock(MyThing, type_safety=type_safety)
 

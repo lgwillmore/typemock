@@ -5,13 +5,13 @@ from typemock._mock import (
     _when
 )
 from typemock._verify import _verify
-from typemock.api import TypeSafety, ResponseBuilder
+from typemock.api import TypeSafety, ResponseBuilder, TypeSafetyConfig
 
 T = TypeVar('T')
 R = TypeVar('R')
 
 
-def tmock(clazz: Union[Type[T], T], type_safety: TypeSafety = TypeSafety.STRICT) -> T:
+def tmock(clazz: Union[Type[T], T], type_safety: TypeSafetyConfig = TypeSafety.STRICT) -> T:
     return _tmock(clazz=clazz, type_safety=type_safety)
 
 

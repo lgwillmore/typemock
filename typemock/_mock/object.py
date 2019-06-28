@@ -5,7 +5,7 @@ from typemock._mock.attributes import MockAttributeState, AttributeResponseBuild
 from typemock._mock.methods import MockMethodState, mock_method
 from typemock._safety import validate_class_type_hints
 from typemock._utils import try_instantiate_class, methods, bind, attributes
-from typemock.api import TypeSafety
+from typemock.api import TypeSafety, TypeSafetyConfig
 
 T = TypeVar('T')
 R = TypeVar('R')
@@ -13,7 +13,7 @@ R = TypeVar('R')
 
 class MockObject(Generic[T], object):
 
-    def __init__(self, mocked_thing: Union[Type[T], T], type_safety: TypeSafety):
+    def __init__(self, mocked_thing: Union[Type[T], T], type_safety: TypeSafetyConfig):
         if not inspect.isclass(mocked_thing):
             mocked_instance: T = cast(T, mocked_thing)
             mocked_class: Type[T] = cast(Type[T], mocked_thing.__class__)
